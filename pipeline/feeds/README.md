@@ -12,6 +12,7 @@ From Python (inside the replay job, with its open psycopg connection):
 
 ```python
 from pipeline.feeds.publish import run as publish_feeds
+
 publish_feeds(conn=conn, upload=True)
 ```
 

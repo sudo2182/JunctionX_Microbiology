@@ -11,7 +11,7 @@ from pipeline.feeds.render import PrivacyError, assert_aggregate_only
 from pipeline.feeds.weeks import week_idx_from_label, week_label
 
 FIXTURE = Path(__file__).parent / "fixtures" / "episodes.json"
-NOW = dt.datetime(2026, 3, 16, 6, 0, tzinfo=dt.timezone.utc)
+NOW = dt.datetime(2026, 3, 16, 6, 0, tzinfo=dt.UTC)
 BASE = "https://amr-watch.vercel.app"
 
 
@@ -184,7 +184,7 @@ def test_ward_feed_includes_hospital_wide_critical(episodes):
 
 
 def test_published_at_is_stable_from_feed_log(episodes):
-    first = dt.datetime(2025, 6, 23, 6, 0, tzinfo=dt.timezone.utc)
+    first = dt.datetime(2025, 6, 23, 6, 0, tzinfo=dt.UTC)
     guid = "amr-watch:A-2025W24-URO-ECOLI-URINE-ESBL:r2"
     out = generate(episodes, base_url=BASE, through_week=130, now=NOW, published_at={guid: first})
     item = next(e for e in feedparser.parse(out["alerts.xml"]).entries if e.id == guid)

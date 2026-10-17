@@ -128,7 +128,7 @@ def validate(rows: list[BenchRow], where: str = "") -> None:
     """Raise ValidationError listing every problem; nothing is written if any row is bad."""
     problems: list[str] = []
     seen: dict[tuple, BenchRow] = {}
-    this_year = dt.datetime.now(dt.timezone.utc).year
+    this_year = dt.datetime.now(dt.UTC).year
     if not rows:
         problems.append("no rows parsed")
     for r in rows:

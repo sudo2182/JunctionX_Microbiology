@@ -155,7 +155,7 @@ def run(
     dry_run: bool = False,
     now: dt.datetime | None = None,
 ) -> list[SourceResult]:
-    now = now or dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+    now = now or dt.datetime.now(dt.UTC).replace(microsecond=0)
     urls = urls if urls is not None else {s: os.environ.get(f"BENCH_{s.upper()}_URL", "") for s in sources}
     results = [collect(s, raw_dir, urls.get(s) or None) for s in sources]  # raises before any write
 

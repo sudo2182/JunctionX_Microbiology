@@ -148,7 +148,7 @@ def generate(
     now: dt.datetime | None = None,
 ) -> dict[str, bytes]:
     """Render every feed. Returns {"alerts.xml": b"...", ...}."""
-    now = now or dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+    now = now or dt.datetime.now(dt.UTC).replace(microsecond=0)
     events = events_from_episodes(episodes, through_week)
     out: dict[str, bytes] = {}
     for spec in build_feeds(events, wards=wards):
@@ -189,7 +189,7 @@ def run(
     now: dt.datetime | None = None,
 ) -> dict[str, bytes]:
     """Entry point for the replay job's last step (pass an open psycopg connection)."""
-    now = now or dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+    now = now or dt.datetime.now(dt.UTC).replace(microsecond=0)
     base_url = base_url or os.environ.get("APP_BASE_URL") or "https://amr-watch.vercel.app"
     wards = None
     published_at: dict[str, dt.datetime] = {}

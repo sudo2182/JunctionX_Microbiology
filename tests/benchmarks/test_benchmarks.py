@@ -11,7 +11,7 @@ from pipeline.benchmarks.refresh import UPSERT_SQL, collect, run, summary_markdo
 
 FIX = Path(__file__).parent / "fixtures"
 RAW = FIX / "raw"
-NOW = dt.datetime(2026, 10, 1, 6, 0, tzinfo=dt.timezone.utc)
+NOW = dt.datetime(2026, 10, 1, 6, 0, tzinfo=dt.UTC)
 REPO = Path(__file__).resolve().parents[2]
 
 
