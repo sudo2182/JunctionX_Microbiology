@@ -1,0 +1,54 @@
+name: ecdc-announcements
+
+# Monitor official ECDC RSS feeds for AMR announcements and store in bench.announcements.
+# Runs daily at 06:00 UTC, or on-demand via workflow_dispatch.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (fetch & classify without writing to DB)"
+        type: boolean
+        default: false
+      only_relevant:
+        description: "Only store AMR relevant & review announcements"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ecdc-announcements
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    environment: supabase-prod
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+      - run: pip install -r pipeline/requirements.txt
+      - name: Check ECDC feeds
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
+          ONLY_REL: ${{ github.event_name == 'workflow_dispatch' && inputs.only_relevant && '--only-relevant' || '' }}
+        run: |
+          if [ -n "$DRY_RUN" ]; then
+            python -m pipeline.announcements --dry-run $ONLY_REL
+          else
+            if [ -z "$SUPABASE_DB_URL" ]; then
+              echo "::error::SUPABASE_DB_URL is not set in the supabase-prod environment."
+              exit 1
+            fi
+            python -m pipeline.announcements --db $ONLY_REL
+          fi
