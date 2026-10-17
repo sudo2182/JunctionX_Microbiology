@@ -1,0 +1,536 @@
+{
+ "cursor_week_idx": 130,
+ "episodes": [
+  {
+   "episode_id": "ep-uro-esbl",
+   "status": "resolved",
+   "severity": "critical",
+   "confidence": "high",
+   "last_fired_week": 95,
+   "firings": [
+    {
+     "week_idx": 89,
+     "evidence": {
+      "alert_id": "A-2025W24-URO-ECOLI-URINE-ESBL",
+      "type": "rate",
+      "organism": "Escherichia coli",
+      "specimen": "urine",
+      "scope": {
+       "type": "ward",
+       "value": "URO"
+      },
+      "current": {
+       "weeks": "2025-W21..2025-W24",
+       "n": 35,
+       "x": 8,
+       "pct": 22.9,
+       "ci": [
+        7.9,
+        39.4
+       ]
+      },
+      "baseline": {
+       "weeks": "2024-W21..2025-W20",
+       "n": 352,
+       "x": 14,
+       "pct": 4.0,
+       "ci": [
+        2.4,
+        6.6
+       ]
+      },
+      "effect": {
+       "abs_pp": 18.9,
+       "ratio": 5.7
+      },
+      "test": {
+       "name": "exact binomial, one-sided",
+       "p": 0.0004,
+       "q": 0.004
+      },
+      "distinct_patients": 8,
+      "breakdown": {
+       "onset": {
+        "hospital": 6,
+        "community": 2
+       }
+      },
+      "severity": {
+       "band": "medium",
+       "points": 4
+      },
+      "confidence": "medium",
+      "evidence_url": "/alerts/A-2025W24-URO-ECOLI-URINE-ESBL",
+      "marker": "ESBL"
+     }
+    },
+    {
+     "week_idx": 90,
+     "evidence": {
+      "alert_id": "A-2025W24-URO-ECOLI-URINE-ESBL",
+      "type": "rate",
+      "organism": "Escherichia coli",
+      "specimen": "urine",
+      "scope": {
+       "type": "ward",
+       "value": "URO"
+      },
+      "current": {
+       "weeks": "2025-W22..2025-W25",
+       "n": 41,
+       "x": 14,
+       "pct": 34.1,
+       "ci": [
+        21.6,
+        49.4
+       ]
+      },
+      "baseline": {
+       "weeks": "2024-W22..2025-W21",
+       "n": 352,
+       "x": 14,
+       "pct": 4.0,
+       "ci": [
+        2.4,
+        6.6
+       ]
+      },
+      "effect": {
+       "abs_pp": 30.1,
+       "ratio": 8.5
+      },
+      "test": {
+       "name": "exact binomial, one-sided",
+       "p": 4e-09,
+       "q": 4e-08
+      },
+      "distinct_patients": 14,
+      "breakdown": {
+       "onset": {
+        "hospital": 11,
+        "community": 3
+       }
+      },
+      "severity": {
+       "band": "high",
+       "points": 6
+      },
+      "confidence": "high",
+      "evidence_url": "/alerts/A-2025W24-URO-ECOLI-URINE-ESBL",
+      "marker": "ESBL"
+     }
+    },
+    {
+     "week_idx": 91,
+     "evidence": {
+      "alert_id": "A-2025W24-URO-ECOLI-URINE-ESBL",
+      "type": "rate",
+      "organism": "Escherichia coli",
+      "specimen": "urine",
+      "scope": {
+       "type": "ward",
+       "value": "URO"
+      },
+      "current": {
+       "weeks": "2025-W23..2025-W26",
+       "n": 47,
+       "x": 18,
+       "pct": 38.3,
+       "ci": [
+        25.9,
+        52.5
+       ]
+      },
+      "baseline": {
+       "weeks": "2024-W23..2025-W22",
+       "n": 352,
+       "x": 14,
+       "pct": 4.0,
+       "ci": [
+        2.4,
+        6.6
+       ]
+      },
+      "effect": {
+       "abs_pp": 34.3,
+       "ratio": 9.6
+      },
+      "test": {
+       "name": "exact binomial, one-sided",
+       "p": 1e-10,
+       "q": 1e-09
+      },
+      "distinct_patients": 18,
+      "breakdown": {
+       "onset": {
+        "hospital": 14,
+        "community": 4
+       }
+      },
+      "severity": {
+       "band": "high",
+       "points": 6
+      },
+      "confidence": "high",
+      "evidence_url": "/alerts/A-2025W24-URO-ECOLI-URINE-ESBL",
+      "marker": "ESBL"
+     }
+    },
+    {
+     "week_idx": 92,
+     "evidence": {
+      "alert_id": "A-2025W24-URO-ECOLI-URINE-ESBL",
+      "type": "rate",
+      "organism": "Escherichia coli",
+      "specimen": "urine",
+      "scope": {
+       "type": "ward",
+       "value": "URO"
+      },
+      "current": {
+       "weeks": "2025-W24..2025-W27",
+       "n": 57,
+       "x": 23,
+       "pct": 40.4,
+       "ci": [
+        28.6,
+        53.4
+       ]
+      },
+      "baseline": {
+       "weeks": "2024-W24..2025-W23",
+       "n": 352,
+       "x": 14,
+       "pct": 4.0,
+       "ci": [
+        2.4,
+        6.6
+       ]
+      },
+      "effect": {
+       "abs_pp": 36.4,
+       "ratio": 10.1
+      },
+      "test": {
+       "name": "exact binomial, one-sided",
+       "p": 1e-13,
+       "q": 1e-12
+      },
+      "distinct_patients": 23,
+      "breakdown": {
+       "onset": {
+        "hospital": 18,
+        "community": 5
+       }
+      },
+      "severity": {
+       "band": "critical",
+       "points": 7
+      },
+      "confidence": "high",
+      "evidence_url": "/alerts/A-2025W24-URO-ECOLI-URINE-ESBL",
+      "marker": "ESBL"
+     }
+    },
+    {
+     "week_idx": 95,
+     "evidence": {
+      "alert_id": "A-2025W24-URO-ECOLI-URINE-ESBL",
+      "type": "rate",
+      "organism": "Escherichia coli",
+      "specimen": "urine",
+      "scope": {
+       "type": "ward",
+       "value": "URO"
+      },
+      "current": {
+       "weeks": "2025-W27..2025-W30",
+       "n": 40,
+       "x": 12,
+       "pct": 30.0,
+       "ci": [
+        18.1,
+        45.6
+       ]
+      },
+      "baseline": {
+       "weeks": "2024-W27..2025-W26",
+       "n": 352,
+       "x": 14,
+       "pct": 4.0,
+       "ci": [
+        2.4,
+        6.6
+       ]
+      },
+      "effect": {
+       "abs_pp": 26.0,
+       "ratio": 7.5
+      },
+      "test": {
+       "name": "exact binomial, one-sided",
+       "p": 1.0000000000000002e-06,
+       "q": 1e-05
+      },
+      "distinct_patients": 12,
+      "breakdown": {
+       "onset": {
+        "hospital": 9,
+        "community": 3
+       }
+      },
+      "severity": {
+       "band": "high",
+       "points": 6
+      },
+      "confidence": "high",
+      "evidence_url": "/alerts/A-2025W24-URO-ECOLI-URINE-ESBL",
+      "marker": "ESBL"
+     }
+    }
+   ]
+  },
+  {
+   "episode_id": "ep-hosp-cip",
+   "status": "open",
+   "severity": "medium",
+   "confidence": "medium",
+   "last_fired_week": 92,
+   "firings": [
+    {
+     "week_idx": 92,
+     "evidence": {
+      "alert_id": "A-2025W27-HOSP-ECOLI-URINE-CIP",
+      "type": "rate",
+      "organism": "Escherichia coli",
+      "specimen": "urine",
+      "scope": {
+       "type": "hospital",
+       "value": "ALL"
+      },
+      "current": {
+       "weeks": "2025-W24..2025-W27",
+       "n": 276,
+       "x": 40,
+       "pct": 14.5,
+       "ci": [
+        10.8,
+        19.2
+       ]
+      },
+      "baseline": {
+       "weeks": "2024-W24..2025-W23",
+       "n": 3610,
+       "x": 290,
+       "pct": 8.0,
+       "ci": [
+        7.2,
+        9.0
+       ]
+      },
+      "effect": {
+       "abs_pp": 6.5,
+       "ratio": 1.8
+      },
+      "test": {
+       "name": "exact binomial, one-sided",
+       "p": 0.0002,
+       "q": 0.002
+      },
+      "distinct_patients": 40,
+      "breakdown": {
+       "onset": {
+        "hospital": 22,
+        "community": 18
+       }
+      },
+      "severity": {
+       "band": "medium",
+       "points": 3
+      },
+      "confidence": "medium",
+      "evidence_url": "/alerts/A-2025W27-HOSP-ECOLI-URINE-CIP",
+      "antibiotic_code": "CIP"
+     }
+    }
+   ]
+  },
+  {
+   "episode_id": "ep-icu-mrsa",
+   "status": "open",
+   "severity": "critical",
+   "confidence": "high",
+   "last_fired_week": 129,
+   "firings": [
+    {
+     "week_idx": 128,
+     "evidence": {
+      "alert_id": "A-2026W11-ICU-SAUR-ALL-MRSA",
+      "type": "count",
+      "organism": "Staphylococcus aureus",
+      "marker": "MRSA",
+      "specimen": "all",
+      "scope": {
+       "type": "ward",
+       "value": "ICU"
+      },
+      "current": {
+       "weeks": "2026-W08..2026-W11",
+       "k": 9
+      },
+      "expected": {
+       "count": 0.9
+      },
+      "effect": {
+       "ratio": 10.0
+      },
+      "test": {
+       "name": "Poisson, one-sided",
+       "p": 2e-07
+      },
+      "distinct_patients": 9,
+      "breakdown": {
+       "onset": {
+        "hospital": 8,
+        "community": 1
+       }
+      },
+      "severity": {
+       "band": "critical",
+       "points": 8
+      },
+      "confidence": "high"
+     }
+    }
+   ]
+  },
+  {
+   "episode_id": "ep-cpe",
+   "status": "open",
+   "severity": "high",
+   "confidence": "low",
+   "last_fired_week": 128,
+   "firings": [
+    {
+     "week_idx": 128,
+     "evidence": {
+      "alert_id": "A-2026W11-MED-A-KPNE-BLOOD-CPE",
+      "type": "sentinel",
+      "organism": "Klebsiella pneumoniae",
+      "marker": "CPE",
+      "specimen": "blood",
+      "scope": {
+       "type": "ward",
+       "value": "MED-A"
+      },
+      "current": {
+       "weeks": "2026-W11",
+       "k": 1
+      },
+      "distinct_patients": 1,
+      "severity": {
+       "band": "high",
+       "points": 6
+      },
+      "confidence": "low"
+     }
+    }
+   ]
+  },
+  {
+   "episode_id": "ep-phc-cip",
+   "status": "open",
+   "severity": "low",
+   "confidence": "low",
+   "last_fired_week": 79,
+   "firings": [
+    {
+     "week_idx": 79,
+     "evidence": {
+      "alert_id": "A-2025W13-PHC-N-KPNE-URINE-CIP",
+      "type": "rate",
+      "organism": "Klebsiella pneumoniae",
+      "specimen": "urine",
+      "scope": {
+       "type": "ward",
+       "value": "PHC-N"
+      },
+      "current": {
+       "weeks": "2025-W11..2025-W14",
+       "n": 31,
+       "x": 6,
+       "pct": 19.4,
+       "ci": [
+        9.2,
+        36.3
+       ]
+      },
+      "baseline": {
+       "weeks": "2024-W11..2025-W10",
+       "n": 410,
+       "x": 18,
+       "pct": 4.4,
+       "ci": [
+        2.8,
+        6.8
+       ]
+      },
+      "effect": {
+       "abs_pp": 15.0,
+       "ratio": 4.4
+      },
+      "test": {
+       "name": "exact binomial, one-sided",
+       "p": 0.004,
+       "q": 0.04
+      },
+      "distinct_patients": 6,
+      "breakdown": {
+       "onset": {
+        "hospital": 0,
+        "community": 6
+       }
+      },
+      "severity": {
+       "band": "low",
+       "points": 2
+      },
+      "confidence": "low",
+      "evidence_url": "/alerts/A-2025W13-PHC-N-KPNE-URINE-CIP",
+      "antibiotic_code": "CIP"
+     }
+    }
+   ]
+  },
+  {
+   "episode_id": "ep-future",
+   "status": "open",
+   "severity": "high",
+   "confidence": "high",
+   "last_fired_week": 140,
+   "firings": [
+    {
+     "week_idx": 140,
+     "evidence": {
+      "alert_id": "A-FUTURE",
+      "type": "sentinel",
+      "organism": "Escherichia coli",
+      "marker": "CPE",
+      "specimen": "urine",
+      "scope": {
+       "type": "ward",
+       "value": "GER"
+      },
+      "current": {
+       "weeks": "2026-W23",
+       "k": 1
+      },
+      "distinct_patients": 1,
+      "severity": "high",
+      "confidence": "low"
+     }
+    }
+   ]
+  }
+ ]
+}
