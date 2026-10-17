@@ -1,8 +1,10 @@
 import { ANTIBIOTICS, MARKERS, WARDS } from "./reference";
 import type { NewRecord } from "./store";
 
-export const TEMPLATE_HEAD = ["patient_id", "sex", "age", "sample_date", "admission_date", "ward", "specimen", "organism", ...MARKERS.map((m) => m.key), ...ANTIBIOTICS.map((a) => a.code)];
-export const TEMPLATE_EXAMPLE = ["P012345", "F", "72", "2025-05-19", "2025-05-12", "MED-A", "urine", "Escherichia coli", "1", "0", "0", "0", "R", "S", "", "", "", "R", "", "S", "R", "S", "S", "", ""];
+// Built on call, not at import: ANTIBIOTICS is replaced by the database's list once it loads.
+export const templateHead = () => ["patient_id", "sex", "age", "sample_date", "admission_date", "ward", "specimen", "organism", ...MARKERS.map((m) => m.key), ...ANTIBIOTICS.map((a) => a.code)];
+const EXAMPLE_AST: Record<string, string> = { AMP: "R", MEC: "S", CRO: "R", MEM: "S", CIP: "R", TMP: "S", NIT: "S" };
+export const templateExample = () => ["P012345", "F", "72", "2025-05-19", "2025-05-12", "MED-A", "urine", "Escherichia coli", "1", "0", "0", "0", ...ANTIBIOTICS.map((a) => EXAMPLE_AST[a.code] ?? "")];
 
 function splitLine(line: string): string[] {
   const out: string[] = [];

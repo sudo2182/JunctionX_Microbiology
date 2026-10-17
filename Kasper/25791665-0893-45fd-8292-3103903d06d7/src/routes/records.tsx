@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ANTIBIOTICS, MARKERS, ORGANISMS, SPECIMENS, WARDS, shortOrg } from "@/lib/amr/reference";
 import { addRecords, deleteRecord, useAmr, type NewRecord } from "@/lib/amr/store";
-import { TEMPLATE_EXAMPLE, TEMPLATE_HEAD, parseUpload } from "@/lib/amr/upload";
+import { parseUpload, templateExample, templateHead } from "@/lib/amr/upload";
 
 export const Route = createFileRoute("/records")({
   head: () => ({
@@ -143,7 +143,7 @@ function BulkUploadDialog() {
   };
 
   const template = () => {
-    const blob = new Blob([[TEMPLATE_HEAD.join(","), TEMPLATE_EXAMPLE.join(",")].join("\n")], { type: "text/csv" });
+    const blob = new Blob([[templateHead().join(","), templateExample().join(",")].join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "amr-upload-template.csv";
@@ -217,7 +217,7 @@ function AddRecordDialog() {
       specimen: f.specimen,
       organism: f.organism,
       markers: flags,
-      sus: sus.join(""),
+      sus: ANTIBIOTICS.map((_, i) => sus[i] ?? "-").join(""),
     }])
       .then(() => {
         toast.success("Record saved — all charts now include it");
@@ -268,7 +268,7 @@ function AddRecordDialog() {
                   <span title={a.name} className="num">{a.code}</span>
                   <div className="flex">
                     {["-", "S", "R"].map((v) => (
-                      <button type="button" key={v} onClick={() => setSus(sus.map((x, j) => (j === i ? v : x)))} className={`num w-7 rounded py-0.5 ${sus[i] === v ? (v === "R" ? "bg-destructive text-destructive-foreground" : v === "S" ? "bg-success text-primary-foreground" : "bg-muted") : "text-muted-foreground"}`}>
+                      <button type="button" key={v} onClick={() => setSus(ANTIBIOTICS.map((_, j) => (j === i ? v : sus[j] ?? "-")))} className={`num w-7 rounded py-0.5 ${(sus[i] ?? "-") === v ? (v === "R" ? "bg-destructive text-destructive-foreground" : v === "S" ? "bg-success text-primary-foreground" : "bg-muted") : "text-muted-foreground"}`}>
                         {v === "-" ? "–" : v}
                       </button>
                     ))}

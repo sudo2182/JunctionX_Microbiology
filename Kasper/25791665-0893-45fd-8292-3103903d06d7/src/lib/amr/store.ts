@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ANTIBIOTICS, WARDS, daysBetween, weekIndex } from "./reference";
+import { ANTIBIOTICS, WARDS, daysBetween, setReference, weekIndex } from "./reference";
 
 /** One isolate result, as the laboratory recorded it. */
 export type IsolateRecord = {
@@ -71,8 +71,11 @@ export function abxResult(r: IsolateRecord, code: string): "S" | "R" | "-" {
   return (r.sus[i] ?? "-") as "S" | "R" | "-";
 }
 
-const CODES = ANTIBIOTICS.map((a) => a.code);
 const PAGE = 1000; // the data API returns at most this many rows per request
+const WAVE = 6; // pages requested at the same time
+
+// Read on every call: ANTIBIOTICS is replaced by the database's list once it loads.
+const codes = () => ANTIBIOTICS.map((a) => a.code);
 
 /** "AMP:R,CIP:S" -> fixed-order S/R/- string the analytics modules expect. */
 function susString(list: string): string {
@@ -81,12 +84,12 @@ function susString(list: string): string {
     const at = part.indexOf(":");
     if (at > 0) seen.set(part.slice(0, at), part.slice(at + 1));
   }
-  return CODES.map((c) => (seen.get(c) === "R" ? "R" : seen.get(c) === "S" ? "S" : "-")).join("");
+  return codes().map((c) => (seen.get(c) === "R" ? "R" : seen.get(c) === "S" ? "S" : "-")).join("");
 }
 
 /** Fixed-order S/R/- string -> "AMP:R,CIP:S" for storage. */
 function susList(sus: string): string {
-  return CODES.map((c, i) => (sus[i] === "S" || sus[i] === "R" ? `${c}:${sus[i]}` : "")).filter(Boolean).join(",");
+  return codes().map((c, i) => (sus[i] === "S" || sus[i] === "R" ? `${c}:${sus[i]}` : "")).filter(Boolean).join(",");
 }
 
 const wardMeta = (code: string) => WARDS.find((w) => w.code === code);
@@ -162,6 +165,18 @@ const toSubmitted = (r: SubmissionRow): IsolateRecord => {
   };
 };
 
+/** A submitted isolate also counts as one positive culture, as addRecords does when it is first saved. */
+const toSubmittedStay = (r: IsolateRecord): StayRecord => ({
+  id: r.id,
+  patient: r.patient,
+  ward: r.ward,
+  date: r.date,
+  admission: r.admission,
+  institution: r.institution,
+  result: "positive",
+  nIsolates: 1,
+});
+
 const toAlert = (r: NewsRow): Alert => ({
   id: r.id,
   title: r.title,
@@ -176,15 +191,35 @@ const toAlert = (r: NewsRow): Alert => ({
 
 type Page = { data: unknown[] | null; error: { message: string } | null };
 
-/** Reads a whole table or view in pages — the data API caps every response at 1000 rows. */
+/** Reads a whole table or view in pages — the data API caps every response — WAVE pages at a time. */
 async function collect<T>(query: (from: number, to: number) => PromiseLike<Page>): Promise<T[]> {
   const out: T[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const { data, error } = await query(from, from + PAGE - 1);
-    if (error) throw new Error(error.message);
-    out.push(...((data ?? []) as T[]));
-    if ((data?.length ?? 0) < PAGE) return out;
+  for (let from = 0; ; from += PAGE * WAVE) {
+    const pages = await Promise.all(Array.from({ length: WAVE }, (_, k) => query(from + k * PAGE, from + (k + 1) * PAGE - 1)));
+    for (const { data, error } of pages) {
+      if (error) throw new Error(error.message);
+      out.push(...((data ?? []) as T[]));
+    }
+    if (pages.some((p) => (p.data?.length ?? 0) < PAGE)) return out;
   }
+}
+
+const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Wards, antibiotics and organisms from the read-only api.ref_* views (ref.* tables, seeded from the TYKS CSVs). */
+async function loadReference() {
+  const api = supabase.schema("api");
+  const [wards, antibiotics, organisms] = await Promise.all([
+    api.from("ref_wards").select("ward_code, ward_en, ward_type, institution"),
+    api.from("ref_antibiotics").select("antibiotic_code, antibiotic, class"),
+    api.from("ref_organisms").select("name"),
+  ]);
+  for (const r of [wards, antibiotics, organisms]) if (r.error) throw new Error(r.error.message);
+  setReference({
+    wards: (wards.data ?? []).flatMap((w) => (w.ward_code ? [{ code: w.ward_code, name: w.ward_en ?? w.ward_code, type: w.ward_type ?? "", institution: w.institution ?? "" }] : [])),
+    antibiotics: (antibiotics.data ?? []).flatMap((a) => (a.antibiotic_code ? [{ code: a.antibiotic_code, name: capitalise(a.antibiotic ?? a.antibiotic_code), cls: capitalise(a.class ?? "") }] : [])),
+    organisms: (organisms.data ?? []).flatMap((o) => (o.name ? [o.name] : [])),
+  });
 }
 
 const RECORD_COLS = "id, patient_id, sex, age, sample_date, admission_date, ward, specimen, organism, markers, susceptibility, onset, setting, institution";
@@ -211,15 +246,17 @@ export function ensureLoaded() {
   if (state.status !== "idle" || typeof window === "undefined") return;
   set({ status: "loading" });
   Promise.all([
+    loadReference(),
     collect<RecordRow>((from, to) => supabase.from("records").select(RECORD_COLS).order("sample_date").order("id").range(from, to)),
     collect<StayRow>((from, to) => supabase.from("ward_stays").select(STAY_COLS).order("sample_date").order("id").range(from, to)),
     collect<SubmissionRow>((from, to) => supabase.from("record_submissions").select(SUB_COLS).neq("status", "rejected").order("sample_date").order("id").range(from, to)),
     collect<NewsRow>((from, to) => supabase.from("news_items").select(NEWS_COLS).order("alert_date", { ascending: false }).order("posted_at", { ascending: false }).range(from, to)),
   ])
-    .then(([recs, sts, subs, news]) => {
+    // Rows are mapped only after loadReference has resolved, so S/R strings use the database's antibiotic list.
+    .then(([, recs, sts, subs, news]) => {
       pipeline = recs.map(toRecord);
       submitted = subs.map(toSubmitted);
-      stays = sts.map(toStay);
+      stays = [...sts.map(toStay), ...submitted.map(toSubmittedStay)];
       set({ status: "ready", alerts: news.map(toAlert) });
       merge();
     })

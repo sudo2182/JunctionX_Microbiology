@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { TEMPLATE_HEAD, parseUpload } from "@/lib/amr/upload";
+import { parseUpload, templateHead } from "@/lib/amr/upload";
 
-const csv = (...rows: string[]) => [TEMPLATE_HEAD.join(","), ...rows].join("\n");
+const csv = (...rows: string[]) => [templateHead().join(","), ...rows].join("\n");
 
 describe("bulk upload", () => {
   it("reads a complete row into markers and susceptibility results", () => {
