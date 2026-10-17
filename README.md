@@ -25,6 +25,7 @@ pipeline/              Python package, run as `python -m pipeline.<module>`
   db.py                psycopg helpers (COPY, upsert, load frames)
   detect.py            anomaly engine -> agg.alert_episodes / alert_firings   (anomaly-engine build)
   feeds/               RSS feeds -> Storage bucket `feeds`, agg.feed_log      (RSS build)
+  announcements/       ECDC RSS monitor -> bench.announcements, api.announcements
   benchmarks/          THL external data -> bench.observations         (data-importer build)
 tests/                 pytest; data/fixtures/ holds tiny hand-built CSVs
 web/                   Next.js dashboard, reads api.* only                    (dashboard build)
@@ -170,6 +171,28 @@ Table numbers and pages in `finres_extract.TABLES` must be checked against the n
 The dashboard must show `attribution` and the `caveat` text from `api.benchmarks` / `api.external_sources` next to any
 external line, and the retrieval date.
 
+## ECDC RSS Announcements Monitor (`pipeline/announcements/`)
+
+Monitors official ECDC RSS feeds for European antimicrobial-resistance (AMR) surveillance reports, CDTR epidemic threat updates, scientific publications, and alerts. Items are classified via a tiered AMR relevance filter (`relevant`, `review`, `unrelated`) and stored into `bench.announcements` (accessible via `api.announcements`).
+
+Monitored official streams:
+- `surveillance`: [Surveillance reports](https://www.ecdc.europa.eu/en/taxonomy/term/1253/feed)
+- `publications`: [Scientific and technical publications](https://www.ecdc.europa.eu/en/taxonomy/term/1244/feed)
+- `threats_cdtr`: [Communicable Disease Threats Report (CDTR)](https://www.ecdc.europa.eu/en/taxonomy/term/1505/feed)
+- `aer`: [Annual epidemiological reports (AER)](https://www.ecdc.europa.eu/en/taxonomy/term/1502/feed)
+- `risk_assessments`: [Risk assessments](https://www.ecdc.europa.eu/en/taxonomy/term/1295/feed)
+- `news`: [News and press releases](https://www.ecdc.europa.eu/en/taxonomy/term/1307/feed)
+
+Commands:
+
+```bash
+python -m pipeline.announcements --dry-run                 # fetch & classify live feeds without DB writes
+python -m pipeline.announcements --dry-run --only-relevant # display only AMR relevant and review items
+python -m pipeline.announcements --db                      # upsert items into Supabase bench.announcements
+python -m pipeline.announcements --json                    # output structured JSON
+pytest tests/announcements -v                              # run unit tests
+```
+
 ## Workflows
 
 | Workflow | Trigger | What it does |
@@ -177,4 +200,5 @@ external line, and the retrieval date.
 | `ci.yml` | pull request, push to `main` | `ruff`, `pytest` (incl. migrations + replay against a Postgres service), `gitleaks` |
 | `replay.yml` | `workflow_dispatch` (+ hourly cron when enabled) | `python -m pipeline.run --advance N [--reset-to K] [--seed]` |
 | `benchmarks.yml` | `workflow_dispatch` (+ monthly cron when `BENCHMARKS_CRON_ENABLED=true`) | `python -m pipeline.benchmarks --source <all\|thl_nidr\|finres> [--dry-run]` into `bench.observations` |
+| `ecdc_announcements.yml` | daily at 06:00 UTC, or `workflow_dispatch` | `python -m pipeline.announcements --db` into `bench.announcements` |
 | `migrate.yml` | push to `main` touching `supabase/migrations/**`, or manual | `supabase db push --db-url $SUPABASE_DB_URL` (no access token needed) |
