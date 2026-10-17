@@ -184,6 +184,41 @@ export type Database = {
       [_ in never]: never
     }
     Views: {
+      announcements: {
+        Row: {
+          announcement_id: number | null
+          article_url: string | null
+          attribution: string | null
+          feed_key: string | null
+          feed_name: string | null
+          first_detected_at: string | null
+          last_checked_at: string | null
+          matched_terms: Json | null
+          published_at: string | null
+          relevance_category: string | null
+          source_id: string | null
+          source_name: string | null
+          status: string | null
+          summary: string | null
+          title: string | null
+        }
+        Relationships: []
+      }
+      external_sources: {
+        Row: {
+          access_method: string | null
+          attribution: string | null
+          last_import_at: string | null
+          licence: string | null
+          landing_url: string | null
+          methodology: string | null
+          name: string | null
+          publisher: string | null
+          source_id: string | null
+          update_cadence: string | null
+        }
+        Relationships: []
+      }
       ref_wards: {
         Row: {
           institution: string | null

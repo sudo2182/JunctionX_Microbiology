@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as DetectionRouteImport } from './routes/detection'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as RecordsRouteImport } from './routes/records'
@@ -19,6 +20,11 @@ import { Route as WardsRouteImport } from './routes/wards'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnnouncementsRoute = AnnouncementsRouteImport.update({
+  id: '/announcements',
+  path: '/announcements',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DetectionRoute = DetectionRouteImport.update({
@@ -49,6 +55,7 @@ const WardsRoute = WardsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/announcements': typeof AnnouncementsRoute
   '/detection': typeof DetectionRoute
   '/map': typeof MapRoute
   '/records': typeof RecordsRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/announcements': typeof AnnouncementsRoute
   '/detection': typeof DetectionRoute
   '/map': typeof MapRoute
   '/records': typeof RecordsRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/announcements': typeof AnnouncementsRoute
   '/detection': typeof DetectionRoute
   '/map': typeof MapRoute
   '/records': typeof RecordsRoute
@@ -74,14 +83,37 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/detection' | '/map' | '/records' | '/risk' | '/wards'
+  fullPaths:
+    | '/'
+    | '/announcements'
+    | '/detection'
+    | '/map'
+    | '/records'
+    | '/risk'
+    | '/wards'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/detection' | '/map' | '/records' | '/risk' | '/wards'
-  id: '__root__' | '/' | '/detection' | '/map' | '/records' | '/risk' | '/wards'
+  to:
+    | '/'
+    | '/announcements'
+    | '/detection'
+    | '/map'
+    | '/records'
+    | '/risk'
+    | '/wards'
+  id:
+    | '__root__'
+    | '/'
+    | '/announcements'
+    | '/detection'
+    | '/map'
+    | '/records'
+    | '/risk'
+    | '/wards'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnnouncementsRoute: typeof AnnouncementsRoute
   DetectionRoute: typeof DetectionRoute
   MapRoute: typeof MapRoute
   RecordsRoute: typeof RecordsRoute
@@ -96,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/announcements': {
+      id: '/announcements'
+      path: '/announcements'
+      fullPath: '/announcements'
+      preLoaderRoute: typeof AnnouncementsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/detection': {
@@ -138,6 +177,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnnouncementsRoute: AnnouncementsRoute,
   DetectionRoute: DetectionRoute,
   MapRoute: MapRoute,
   RecordsRoute: RecordsRoute,
