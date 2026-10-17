@@ -3,3 +3,4 @@ numpy>=1.26
 scipy>=1.12
 psycopg[binary]>=3.2,<4
 certifi>=2024.2.2
+feedparser>=6.0
