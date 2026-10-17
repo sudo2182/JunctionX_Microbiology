@@ -14,7 +14,8 @@ From the replay job (once `lab.*` exists), build the two input frames from the d
 
 ```python
 from pipeline.anomaly import Engine, build_episodes
-engine = Engine(isolates, markers)          # frames described in data.py
+
+engine = Engine(isolates, markers)  # frames described in data.py
 alerts = engine.detect_week(cursor_week_idx)
 ```
 
@@ -44,14 +45,16 @@ after 2 quiet weeks.
 
 ## Output
 
-`Alert.to_dict()` is the section 7.4 evidence JSON (one `agg.alert_firings.evidence` row):
-`alert_id, key, week_idx, week, type, organism, marker, specimen, scope{type,value},
-severity{band,points}, confidence, rank, sentence, current{weeks,n_weeks,n,x,pct,ci | weeks,k},
-baseline{weeks,n,x,pct,ci | weeks,count}, expected{count} (count alerts), effect, test{name,p,q},
-distinct_patients, isolate_count, breakdown{onset,specimen,ward}, co_resistance, rule,
-severity_reasons`. No patient or isolate ids, no dates finer than the ISO week.
-`Episode.to_feed_dict()` is an `agg.alert_episodes` row plus its firings, the shape
-`pipeline.feeds` reads.
+`Alert.to_dict()` is the section 7.4 evidence JSON (one `agg.alert_firings.evidence` row), read by
+both `pipeline.feeds` and the dashboard's `AlertEvidence` type:
+`alert_id` (e.g. `A-2025W24-URO-ECOLI-URINE-ESBL`), `key, week_idx, week, type, organism, marker,
+specimen, scope{type,value}, severity` (band), `severity_points, confidence, rank, rank_score, sentence,
+current{weeks,window_weeks,n,x,pct,ci | k}, baseline{weeks,n,x,pct,ci | count,count_52w,expected_4w}`,
+`expected{count}` (count alerts), `effect, test{name,p,q}, rule, distinct_patients, isolate_count,
+breakdown{onset,specimen,ward}, co_resistance, hospital_onset_share, severity_reasons`. No patient or
+isolate ids, no dates finer than the ISO week. `Episode.to_dict()` is an `agg.alert_episodes` row with
+the dashboard's `api.alerts` columns (`alert_id, opened_week_idx, last_fired_week_idx, headline, ...`);
+`Episode.to_feed_dict()` adds its firings, the shape `pipeline.feeds` reads.
 
 ## Results on the synthetic dataset (weeks 56-156)
 

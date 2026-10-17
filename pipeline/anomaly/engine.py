@@ -35,6 +35,24 @@ from .explain import explain, sentence
 from .scoring import score
 
 SCOPE_COLUMN = {"hospital": None, "ward": "ward_code", "setting": "setting", "onset": None}
+ORGANISM_CODES = {
+    "Escherichia coli": "ECOLI",
+    "Klebsiella pneumoniae": "KPNE",
+    "Klebsiella oxytoca": "KOXY",
+    "Proteus mirabilis": "PMIR",
+    "Citrobacter freundii": "CFRE",
+    "Pseudomonas aeruginosa": "PAER",
+    "Staphylococcus aureus": "SAUR",
+    "Staphylococcus saprophyticus": "SSAP",
+    "Enterococcus faecalis": "EFAE",
+    "3GC-R Enterobacterales": "ENTB",
+    "ESBL": "ENTB",
+    "CPE": "ENTB",
+    "Carbapenem-R Enterobacterales": "ENTB",
+    "MRSA": "SAUR",
+    "Blood MRSA": "SAUR",
+    "VRE": "EFAE",
+}
 RATE_KEY = ["organism", "specimen", "marker", "scope_value"]
 
 
@@ -80,16 +98,33 @@ class Alert:
 
     @property
     def alert_id(self) -> str:
+        """Public id used by the RSS feed and dashboard deep links, e.g. A-2025W24-URO-ECOLI-URINE-ESBL."""
+        org = ORGANISM_CODES.get(self.organism, self.organism.upper().replace(" ", "").replace(".", ""))
         parts = [
             week_label(self.week_idx).replace("-", ""),
-            self.scope_value,
-            self.organism,
-            self.specimen,
-            self.marker,
+            self.scope_value.upper(),
+            org,
+            self.specimen.upper(),
+            self.marker.upper(),
         ]
-        return "A-" + "-".join(p.upper().replace(" ", "").replace(".", "") for p in parts)
+        return "A-" + "-".join(parts)
 
     def to_dict(self) -> dict[str, Any]:
+        """The section 7.4 evidence JSON: one agg.alert_firings.evidence row.
+
+        Read by pipeline.feeds and by the dashboard's AlertEvidence type, so a few values appear
+        under both consumers' names (severity_points / rank_score, expected.count / baseline.expected_4w).
+        """
+        ev = {k: v for k, v in self.evidence.items()}
+        current = dict(ev.pop("current"))
+        current["window_weeks"] = current.get("n_weeks", 1 if self.type == "sentinel" else 4)
+        baseline = ev.pop("baseline")
+        if baseline is not None:
+            baseline = dict(baseline)
+            if "count" in baseline:
+                baseline["count_52w"] = baseline["count"]
+                baseline["expected_4w"] = ev["expected"]["count"]
+        onset = ev.get("breakdown", {}).get("onset", {})
         return {
             "alert_id": self.alert_id,
             "key": self.key,
@@ -100,11 +135,19 @@ class Alert:
             "marker": self.marker,
             "specimen": self.specimen,
             "scope": {"type": self.scope_type, "value": self.scope_value},
-            "severity": {"band": self.severity, "points": self.severity_points},
+            "severity": self.severity,
+            "severity_points": self.severity_points,
             "confidence": self.confidence,
             "rank": self.rank,
+            "rank_score": self.rank,
             "sentence": self.sentence,
-            **self.evidence,
+            "current": current,
+            "baseline": baseline,
+            "distinct_patients": ev.pop("distinct_patients", None),
+            "breakdown": ev.pop("breakdown", {}),
+            "co_resistance": ev.pop("co_resistance", {}),
+            "hospital_onset_share": round(onset.get("hospital", 0) / sum(onset.values()), 2) if onset else None,
+            **ev,
         }
 
 

@@ -101,7 +101,12 @@ def test_count_alert_for_mrsa_cluster():
     a = hit[0]
     assert a.evidence["current"]["k"] == 7
     assert a.evidence["expected"]["count"] == 0.5  # 4 / 52 * 4 = 0.31, floored at 0.5
-    assert a.to_dict()["severity"] == {"band": "critical", "points": a.severity_points}
+    d = a.to_dict()
+    assert (d["severity"], d["severity_points"], d["rank_score"]) == ("critical", a.severity_points, a.rank)
+    assert d["current"]["window_weeks"] == 4
+    assert d["baseline"]["count_52w"] == 4 and d["baseline"]["expected_4w"] == d["expected"]["count"] == 0.5
+    assert d["alert_id"] == "A-2024W47-ICU-SAUR-ALL-MRSA"
+    assert d["hospital_onset_share"] == 1.0
     assert a.severity == "critical"  # priority + blood + >=3x + hospital onset + >=5 patients
     assert a.confidence == "high"
 

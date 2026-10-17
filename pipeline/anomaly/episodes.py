@@ -37,16 +37,29 @@ class Episode:
         return f"E-{week_label(self.opened_week)}-{self.key}"
 
     def to_dict(self) -> dict[str, Any]:
+        """agg.alert_episodes row; also carries the columns the dashboard's api.alerts view needs."""
+        first, latest = self.firings[0], self.firings[-1]
         return {
             "episode_id": self.episode_id,
+            "alert_id": first.alert_id,
             "key": self.key,
+            "type": latest.type,
+            "organism": latest.organism,
+            "marker": latest.marker,
+            "specimen": latest.specimen,
+            "scope_type": latest.scope_type,
+            "scope_value": latest.scope_value,
             "opened_week": self.opened_week,
+            "opened_week_idx": self.opened_week,
             "last_fired_week": self.last_fired_week,
+            "last_fired_week_idx": self.last_fired_week,
             "resolved_week": self.resolved_week,
             "status": self.status,
             "severity": self.severity,
+            "severity_points": max(a.severity_points for a in self.firings),
             "confidence": self.confidence,
             "rank": self.rank,
+            "headline": latest.sentence,
             "n_firings": len(self.firings),
         }
 
