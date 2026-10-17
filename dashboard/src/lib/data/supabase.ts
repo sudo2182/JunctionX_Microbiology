@@ -12,6 +12,7 @@ import type {
   CurrentVsBaseline,
   DataQualityRun,
   DataSource,
+  ExternalContextRow,
   HeatmapCell,
   RateRow,
   RefData,
@@ -425,6 +426,18 @@ export const supabaseSource: DataSource = {
         .eq("antibiotic_code", combo.antibiotic_code)
         .in("specimen", [combo.specimen, "all"]),
     );
+  },
+
+  async externalContext(phenotype, fromYear) {
+    const r = await rows<ExternalContextRow>(
+      api()
+        .from("external_context")
+        .select("*")
+        .eq("phenotype", phenotype)
+        .gte("year", fromYear)
+        .order("year", { ascending: false }),
+    );
+    return r.map((x) => ({ ...x, value: Number(x.value), denominator: num(x.denominator) }));
   },
 
   async dataQuality(limit) {

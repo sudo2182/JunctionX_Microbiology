@@ -397,6 +397,11 @@ export const mockSource: DataSource = {
     return [];
   },
 
+  async externalContext() {
+    // Not mocked, same reason as benchmarks().
+    return [];
+  },
+
   async dataQuality(limit) {
     const t = cursor();
     return load()

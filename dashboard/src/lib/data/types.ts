@@ -200,6 +200,23 @@ export interface BenchmarkRow {
   source_url: string | null;
 }
 
+/** api.external_context: THL notified cases and incidence. Counts, never a resistance rate. */
+export interface ExternalContextRow {
+  source: string;
+  year: number;
+  geo_name: string;
+  organism: string;
+  phenotype: string;
+  specimen: "blood_csf" | "carriage" | "urine" | "pus" | "all";
+  indicator: "cases" | "incidence_per_100k";
+  value: number;
+  denominator: number | null;
+  retrieved_at: string;
+  source_url: string;
+  attribution: string;
+  licence: string;
+}
+
 /** api.data_quality: one row per replay run (week). */
 export interface DataQualityRun {
   run_id: string;
@@ -261,5 +278,7 @@ export interface DataSource {
   alerts(): Promise<AlertEpisode[]>;
   alertDetail(episodeId: string): Promise<AlertDetail | null>;
   benchmarks(combo: Combo): Promise<BenchmarkRow[]>;
+  /** THL notified cases / incidence for one phenotype marker (MRSA, ESBL, VRE, CPE), from `fromYear`. */
+  externalContext(phenotype: string, fromYear: number): Promise<ExternalContextRow[]>;
   dataQuality(limit: number): Promise<DataQualityRun[]>;
 }

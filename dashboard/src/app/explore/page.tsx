@@ -1,10 +1,11 @@
 import { FilterBar } from "@/components/FilterBar";
+import { ExternalContext } from "@/components/ExternalContext";
 import { ForestPlot } from "@/components/ForestPlot";
 import { Heatmap } from "@/components/Heatmap";
 import { PageTitle, Section } from "@/components/Section";
 import { TrendChart } from "@/components/TrendChart";
 import { getData } from "@/lib/data";
-import type { Combo, RateRow, Scope, Specimen } from "@/lib/data/types";
+import { PHENOTYPE_CODES, type Combo, type RateRow, type Scope, type Specimen } from "@/lib/data/types";
 import { fmtCi, fmtPct, ONSET_LABEL, PHENOTYPE_LABEL, scopeLabel, SETTING_LABEL, shortOrganism, SPECIMEN_LABEL } from "@/lib/format";
 import { parseFilters, SPECIMENS, type SearchParams } from "@/lib/filters";
 import { MIN_N } from "@/lib/stats";
@@ -26,7 +27,8 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
     ...Object.keys(SETTING_LABEL).map((v) => ({ scope_type: "setting" as const, scope_value: v })),
     ...Object.keys(ONSET_LABEL).map((v) => ({ scope_type: "onset" as const, scope_value: v })),
   ];
-  const [cells, wards, trend, bySpecimen, yearly, splits] = await Promise.all([
+  const hasRegister = (PHENOTYPE_CODES as readonly string[]).includes(f.abx);
+  const [cells, wards, trend, bySpecimen, yearly, splits, register] = await Promise.all([
     data.heatmap(f.specimen, f.scope, f.window),
     data.wardComparison(combo, f.window),
     data.rateSeries(combo, f.scope, f.window),
@@ -35,6 +37,7 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
     ),
     data.rateSeries(combo, f.scope, 52),
     Promise.all(splitScopes.map((s) => data.rateSeries(combo, s, 52).then((r) => r.at(-1)))),
+    hasRegister ? data.externalContext(f.abx, 2019) : Promise.resolve([]),
   ]);
 
   // Codes in the reference order; urine-only agents only for urine.
@@ -122,6 +125,15 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
           />
         </Section>
       </div>
+
+      {hasRegister && (
+        <Section
+          title={`National context · ${markerName} · THL register`}
+          subtitle="Notified cases and incidence per 100,000, Finland and Southwest Finland. Context only."
+        >
+          <ExternalContext rows={register} />
+        </Section>
+      )}
     </>
   );
 }
