@@ -1,0 +1,3 @@
+# Only for the local inspector (tools/benchmark_inspector). Not needed by the pipeline or CI.
+-r ../../pipeline/requirements.txt
+streamlit>=1.40
