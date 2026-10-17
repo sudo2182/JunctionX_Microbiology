@@ -1,0 +1,3 @@
+# Minimal Supabase CLI config so `supabase link` / `supabase db push` (migrate.yml) work.
+# Hosted project ref: jofgoferdnkihimvencr.
+project_id = "amr-watch"

@@ -1,0 +1,21 @@
+isolate_id,culture_id,organism,antibiotic,antibiotic_code,antibiotic_fi,result,guideline
+C1-1,C1,Escherichia coli,ciprofloxacin,CIP,siprofloksasiini,R,EUCAST 2023
+C1-1,C1,Escherichia coli,trimethoprim,TMP,trimetopriimi,S,EUCAST 2023
+C1-1,C1,Escherichia coli,ampicillin,AMP,ampisilliini,R,EUCAST 2023
+C2-1,C2,Escherichia coli,ciprofloxacin,CIP,siprofloksasiini,S,EUCAST 2023
+C2-1,C2,Escherichia coli,trimethoprim,TMP,trimetopriimi,R,EUCAST 2023
+C3-1,C3,Escherichia coli,ciprofloxacin,CIP,siprofloksasiini,S,EUCAST 2023
+C4-1,C4,Klebsiella pneumoniae,ampicillin,AMP,ampisilliini,R,EUCAST 2023
+C4-1,C4,Klebsiella pneumoniae,ciprofloxacin,CIP,siprofloksasiini,S,EUCAST 2023
+C4-1,C4,Klebsiella pneumoniae,nitrofurantoin,NIT,nitrofurantoiini,S,EUCAST 2023
+C5-1,C5,Staphylococcus aureus,cefoxitin (screen),FOX,kefoksitiini (seulonta),R,EUCAST 2023
+C5-1,C5,Staphylococcus aureus,trimethoprim,TMP,trimetopriimi,R,EUCAST 2023
+C5-1,C5,Staphylococcus aureus,clindamycin,CLI,klindamysiini,S,EUCAST 2023
+C6-1,C6,Proteus mirabilis,nitrofurantoin,NIT,nitrofurantoiini,R,EUCAST 2023
+C6-1,C6,Proteus mirabilis,ciprofloxacin,CIP,siprofloksasiini,S,EUCAST 2023
+C6-1,C6,Proteus mirabilis,ampicillin,AMP,ampisilliini,I,EUCAST 2023
+C7-1,C7,Escherichia coli,ciprofloxacin,CIP,siprofloksasiini,R,EUCAST 2023
+C7-1,C7,Escherichia coli,ceftriaxone,CRO,keftriaksoni,S,EUCAST 2023
+C7-1,C7,Escherichia coli,zapomycin,ZZZ,zapomysiini,S,EUCAST 2023
+C7-2,C7,Bacillus imaginarius,ciprofloxacin,CIP,siprofloksasiini,S,EUCAST 2023
+C8-1,C8,Escherichia coli,ciprofloxacin,CIP,siprofloksasiini,R,EUCAST 2023

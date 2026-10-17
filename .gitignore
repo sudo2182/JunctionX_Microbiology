@@ -1,0 +1,27 @@
+# Data: the synthetic export goes in data/raw/ (never commit another copy of the full dataset)
+data/raw/
+build/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+*.egg-info/
+
+# Supabase CLI local state
+supabase/.temp/
+supabase/.branches/
+
+# Node (web/)
+node_modules/
+.next/
+.vercel/
+
+.DS_Store
