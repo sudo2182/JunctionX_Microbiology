@@ -25,6 +25,7 @@ pipeline/              Python package, run as `python -m pipeline.<module>`
   db.py                psycopg helpers (COPY, upsert, load frames)
   detect.py            anomaly engine -> agg.alert_episodes / alert_firings   (anomaly-engine build)
   feeds/               RSS feeds -> Storage bucket `feeds`, agg.feed_log      (RSS build)
+  announcements/       ECDC RSS monitor -> bench.announcements, api.announcements
   benchmarks/          THL external data -> bench.observations         (data-importer build)
 tests/                 pytest; data/fixtures/ holds tiny hand-built CSVs
 web/                   Next.js dashboard, reads api.* only                    (dashboard build)
@@ -170,6 +171,37 @@ Table numbers and pages in `finres_extract.TABLES` must be checked against the n
 The dashboard must show `attribution` and the `caveat` text from `api.benchmarks` / `api.external_sources` next to any
 external line, and the retrieval date.
 
+## ECDC RSS Announcements Monitor (`pipeline/announcements/`)
+
+Checks official ECDC RSS feeds for AMR-related announcements (surveillance reports, publications, threat reports,
+epidemiological updates, risk assessments, news). It is a **discovery tool**: it stores titles, links, dates and the
+feed's short summary, and sorts each item with transparent keyword rules (`filter.py`) into `relevant`, `review` or
+`unrelated`. A keyword match is not an outbreak or a confirmed clinical alert, and no rates are derived from it.
+
+- Storage: `bench.announcements`, one row per item, keyed on the feed GUID (canonical article URL when there is
+  none), so re-runs never duplicate. Every check is logged in `bench.import_runs` (`source_id = 'ecdc_rss'`).
+- Dashboard: `api.announcements` (sort it yourself, e.g. `order=published_at.desc.nullslast`) and the last successful
+  check in `api.external_sources.last_import_at`.
+- Schedule: **not real time.** The `ecdc_announcements.yml` workflow runs on demand, and daily at 06:23 UTC once the
+  repository variable `ANNOUNCEMENTS_CRON_ENABLED` is `true`. Each ECDC feed lists only its latest ~10 items, so
+  checking less than daily can miss items.
+- One failing feed (network error, HTTP error, HTML or empty response) is reported and skipped; the run fails only
+  when every feed fails.
+
+Feeds (all listed on <https://www.ecdc.europa.eu/en/rss-feeds>; configured in `config.py`):
+`surveillance` (1253), `publications` (1244), `threats_cdtr` (1505), `aer` (1502), `risk_assessments` (1295),
+`news` (1307), `epi_updates` (1310).
+
+```bash
+python -m pipeline.announcements --dry-run                 # fetch & classify live feeds, write nothing
+python -m pipeline.announcements --dry-run --only-relevant # same, show only relevant/review items
+python -m pipeline.announcements --db                      # store in bench.announcements (needs SUPABASE_DB_URL)
+python -m pipeline.announcements --dry-run --json          # structured report
+pytest tests/announcements                                 # unit tests; DB tests need TEST_DATABASE_URL
+```
+
+ECDC content is CC BY 4.0 unless stated otherwise: show `attribution` from `api.announcements` next to the items.
+
 ## Workflows
 
 | Workflow | Trigger | What it does |
@@ -177,4 +209,5 @@ external line, and the retrieval date.
 | `ci.yml` | pull request, push to `main` | `ruff`, `pytest` (incl. migrations + replay against a Postgres service), `gitleaks` |
 | `replay.yml` | `workflow_dispatch` (+ hourly cron when enabled) | `python -m pipeline.run --advance N [--reset-to K] [--seed]` |
 | `benchmarks.yml` | `workflow_dispatch` (+ monthly cron when `BENCHMARKS_CRON_ENABLED=true`) | `python -m pipeline.benchmarks --source <all\|thl_nidr\|finres> [--dry-run]` into `bench.observations` |
+| `ecdc_announcements.yml` | `workflow_dispatch` (+ daily cron when `ANNOUNCEMENTS_CRON_ENABLED=true`) | `python -m pipeline.announcements --db [--dry-run] [--only-relevant]` into `bench.announcements` |
 | `migrate.yml` | push to `main` touching `supabase/migrations/**`, or manual | `supabase db push --db-url $SUPABASE_DB_URL` (no access token needed) |
