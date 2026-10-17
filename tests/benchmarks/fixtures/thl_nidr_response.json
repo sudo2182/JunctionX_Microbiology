@@ -1,0 +1,105 @@
+{
+"dataset": {
+"version": "2.0",
+"class": "dataset",
+"label": "Finnish National Infectious Diseases Register, statistical database - cases",
+"dimension": {
+"id": [
+"nidrreportgroup","yearmonth","wscmunicipality2022","measure"
+],
+"size": [
+3,2,2,3
+],
+"nidrreportgroup" : {
+"category": {
+"index": {
+"878105": 0,
+"878175": 1,
+"877792": 2
+},
+"label": {
+"878105": "S. aureus, blood/liquor MRSA",
+"878175": "ESBL blood/liquor, E.coli",
+"877792": "ESBL-carriership, E.coli"
+}
+}
+},
+"yearmonth" : {
+"category": {
+"index": {
+"877827": 0,
+"1088395": 1
+},
+"label": {
+"877827": "Year 2023",
+"1088395": "Year 2024"
+}
+}
+},
+"wscmunicipality2022" : {
+"category": {
+"index": {
+"877686": 0,
+"878211": 1
+},
+"label": {
+"877686": "All areas",
+"878211": "Southwest Finland wellbeing services county"
+}
+}
+},
+"measure" : {
+"category": {
+"index": {
+"877837": 0,
+"931297": 1,
+"433796": 2
+},
+"label": {
+"877837": "Cases",
+"931297": "Incidence",
+"433796": "Population"
+}
+}
+}
+},
+"value": {
+"0": "79",
+"1": "1.4",
+"2": "5603851",
+"3": "7",
+"4": "1.4",
+"5": "490786",
+"6": "102",
+"7": "1.8",
+"8": "5635971",
+"9": "3",
+"10": "0.6",
+"11": "494819",
+"12": "337",
+"13": "6.0",
+"14": "5603851",
+"15": "8",
+"16": "1.6",
+"17": "490786",
+"18": "335",
+"19": "5.9",
+"20": "5635971",
+"21": "3",
+"22": "0.6",
+"23": "494819",
+"24": "3753",
+"25": "67.0",
+"26": "5603851",
+"27": "158",
+"28": "32.2",
+"29": "490786",
+"30": "3904",
+"31": "69.3",
+"32": "5635971",
+"33": "131",
+"34": "26.5",
+"35": "494819"
+}
+}
+}

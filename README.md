@@ -25,7 +25,7 @@ pipeline/              Python package, run as `python -m pipeline.<module>`
   db.py                psycopg helpers (COPY, upsert, load frames)
   detect.py            anomaly engine -> agg.alert_episodes / alert_firings   (anomaly-engine build)
   feeds/               RSS feeds -> Storage bucket `feeds`, agg.feed_log      (RSS build)
-  benchmarks/          ECDC / THL / GLASS -> bench.rates                      (benchmarks build)
+  benchmarks/          THL external data -> bench.observations         (data-importer build)
 tests/                 pytest; data/fixtures/ holds tiny hand-built CSVs
 web/                   Next.js dashboard, reads api.* only                    (dashboard build)
 .github/workflows/     ci.yml, replay.yml, migrate.yml
@@ -38,6 +38,7 @@ Contracts between the builds:
 | `run.py` -> `detect.py` | `detect.run(conn, weeks, run_id, ref) -> dict`, called with every week_idx just released, after `agg.rates` is written for them. Must be idempotent per week. Thresholds in `ref.alert_rules`. |
 | `run.py` -> `feeds` | `pipeline.feeds.publish.run(conn=conn, upload=...)`, the last step of every run. Skipped automatically until `pipeline/feeds/` is merged. |
 | pipeline -> dashboard | The `api.*` views only (columns in `supabase/migrations/*_api_views.sql`). No patient ids, birth years or exact dates; the smallest time unit is the ISO week. |
+| external data | `bench.observations` holds THL figures with provenance. It is never joined to `lab.*` or `agg.*`; `ref.benchmark_comparability` is the only link, and the dashboard reads `api.benchmarks`, `api.benchmarks_by_sex`, `api.external_context` and `api.external_sources`. See "External benchmarks" below. |
 | `agg.rates` | One row per `(end_week_idx, window_weeks, organism, antibiotic_code, specimen, scope_type, scope_value)`. `antibiotic_code` is a WHONET code or a phenotype marker `ESBL`/`MRSA`/`VRE`/`CPE`. `specimen = 'all'` and `window_weeks = 1` exist at hospital scope only. `reportable` = `n_tested >= 30`. Intrinsic and non-reportable AST rows never count. |
 
 Change the schema with a **new** migration file (`supabase/migrations/<timestamp>_<name>.sql`); never
@@ -134,10 +135,46 @@ Do these in order. The `api` schema only exists after step 2, and GitHub only le
 The service role key never goes to Vercel or the browser; the dashboard uses the anon key, which
 can only `select` from `api.*` (RLS is enabled on every other table with no policies).
 
+## External benchmarks (THL)
+
+Official national and European figures, kept **apart from the local TYKS data**. They are annual, aggregate and
+cover different populations, so they are context, never mixed into `agg.rates`.
+
+| Source | What it is | How it gets in | Reuse |
+|---|---|---|---|
+| THL infectious diseases register (`thl_nidr`) | Notified **cases and incidence per 100,000** for invasive (blood/CSF) MRSA, ESBL, VRE and for carriage, Finland and Southwest Finland, whole years | THL's open JSON-stat API, fetched by the importer (`--source thl_nidr`) | CC BY 4.0 |
+| THL Finres report (`thl_finres`) | **% resistant and number tested**, national, 2015-2024, urine (by sex), blood, K. pneumoniae, P. aeruginosa, S. aureus, E. faecalis | Tables transcribed from the report PDF into `pipeline/benchmarks/data/finres_2024.csv` (`finres_extract.py`, reviewed); PDF not committed | CC BY-NC-ND 4.0, figures only, attribution shown |
+
+Rules the importer enforces (`pipeline/benchmarks/`):
+
+- Only **whole calendar years** are imported. Compare an external year only with local first isolates over the same calendar year.
+- Nothing is invented: a cell the source does not publish (`*` in Finres, no value in THL) is skipped and counted, never stored as 0. No confidence intervals or resistant counts are derived from rounded percentages.
+- THL register rows are counts and incidence, not "% resistant", and are only exposed through `api.external_context`.
+- `ref.benchmark_comparability` (`pipeline/benchmarks/data/comparability.csv`) lists which external series may sit beside which local rate: same antimicrobial, same organism, blood with blood/CSF and urine with urine, same sex. Urine E. coli exists in Finres only per sex, so it is in `api.benchmarks_by_sex`, never in `api.benchmarks`. No VRE benchmark: THL pools enterococci, the local data is E. faecalis only.
+- Every run is recorded in `bench.import_runs` (what was read, checksum, rows inserted/updated/unchanged/skipped, error). A bad batch writes nothing. Re-running identical input changes nothing.
+- The local dataset is synthetic, so any comparison with these real figures is illustrative.
+
+Commands (need `SUPABASE_DB_URL`, except `--dry-run`, which then only parses and validates):
+
+```bash
+python -m pipeline.benchmarks --source thl_nidr --dry-run        # fetch THL, validate, write nothing
+python -m pipeline.benchmarks --source all                       # thl_nidr + finres
+pytest tests/benchmarks -q
+```
+
+**Adding a new Finres report:** download the PDF, then
+`python -m pipeline.benchmarks.finres_extract --pdf Finres2025.pdf --release 2025` (checks every table against its expected
+rows, stops on anything unexpected). Compare the CSV with the report, set `"reviewed": true` in the `.meta.json`, commit both.
+Table numbers and pages in `finres_extract.TABLES` must be checked against the new edition first.
+
+The dashboard must show `attribution` and the `caveat` text from `api.benchmarks` / `api.external_sources` next to any
+external line, and the retrieval date.
+
 ## Workflows
 
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `ci.yml` | pull request, push to `main` | `ruff`, `pytest` (incl. migrations + replay against a Postgres service), `gitleaks` |
 | `replay.yml` | `workflow_dispatch` (+ hourly cron when enabled) | `python -m pipeline.run --advance N [--reset-to K] [--seed]` |
+| `benchmarks.yml` | `workflow_dispatch` (+ monthly cron when `BENCHMARKS_CRON_ENABLED=true`) | `python -m pipeline.benchmarks --source <all\|thl_nidr\|finres> [--dry-run]` into `bench.observations` |
 | `migrate.yml` | push to `main` touching `supabase/migrations/**`, or manual | `supabase db push --db-url $SUPABASE_DB_URL` (no access token needed) |
