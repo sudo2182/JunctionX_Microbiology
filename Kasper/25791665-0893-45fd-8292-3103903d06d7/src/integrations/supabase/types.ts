@@ -17,6 +17,7 @@ export type Database = {
       news_items: {
         Row: {
           alert_date: string
+          detection_key: string | null
           id: string
           organism: string | null
           posted_at: string
@@ -29,6 +30,7 @@ export type Database = {
         }
         Insert: {
           alert_date?: string
+          detection_key?: string | null
           id?: string
           organism?: string | null
           posted_at?: string
@@ -41,6 +43,7 @@ export type Database = {
         }
         Update: {
           alert_date?: string
+          detection_key?: string | null
           id?: string
           organism?: string | null
           posted_at?: string
