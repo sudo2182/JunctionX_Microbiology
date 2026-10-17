@@ -83,7 +83,8 @@ def test_anon_reads_api_only(conn):
     with conn.cursor() as cur:
         cur.execute("set role anon")
         for view in ("replay_status", "rate_series", "current_vs_baseline", "antibiogram", "heatmap",
-                     "ward_comparison", "benchmarks", "alerts", "alert_detail", "data_quality", "organisms"):
+                     "ward_comparison", "benchmarks", "alerts", "alert_detail", "data_quality", "ref_organisms",
+                     "ref_antibiotics", "ref_wards", "ref_intrinsic_resistance", "ref_phenotypes", "ref_weeks"):
             cur.execute(f"select * from api.{view} limit 1")
             cols = {d.name for d in cur.description}
             assert not cols & {"patient_id", "birth_year", "sample_date", "culture_id", "isolate_id"}, view

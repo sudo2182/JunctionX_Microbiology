@@ -7,6 +7,7 @@ create view api.replay_status as
 select
   s.cursor_week_idx,
   case when s.cursor_week_idx > 0 then ref.week_label(s.cursor_week_idx) end as data_through,
+  case when s.cursor_week_idx > 0 then ref.week_start(s.cursor_week_idx) end as week_start,
   s.updated_at,
   r.run_id        as last_run_id,
   r.status        as last_run_status,
@@ -107,7 +108,7 @@ left join r y
  and y.specimen = k.specimen and y.scope_type = k.scope_type and y.scope_value = k.scope_value;
 
 -- Section C heatmap: organism x antibiotic for any window/scope up to the cursor.
--- Intrinsic pairs never appear here (they are excluded from rates); overlay api.intrinsic_resistance as "IR".
+-- Intrinsic pairs never appear here (they are excluded from rates); overlay api.ref_intrinsic_resistance as "IR".
 create view api.heatmap as
 select
   r.end_week_idx, ref.week_label(r.end_week_idx) as end_week, r.window_weeks,
@@ -119,7 +120,7 @@ join ref.organisms o on o.name = r.organism
 where r.end_week_idx <= (select cursor_week_idx from lab.replay_state where id = 1)
   and r.antibiotic_code not in ('ESBL', 'MRSA', 'VRE', 'CPE');
 
-create view api.intrinsic_resistance as
+create view api.ref_intrinsic_resistance as
 select organism, antibiotic_code, source from ref.intrinsic_resistance;
 
 -- Forest plot: one row per ward with the hospital rate alongside.
@@ -182,11 +183,15 @@ create view api.pipeline_runs as
 select run_id, started_at, finished_at, status, cursor_from, cursor_to, steps, run_url, error
 from lab.pipeline_runs;
 
--- Filter pickers.
-create view api.organisms as select name, short_name, whonet_code, gram, org_group from ref.organisms;
-create view api.antibiotics as select antibiotic_code, antibiotic, antibiotic_fi, class, reported_for from ref.antibiotics;
-create view api.wards as select ward_code, ward_fi, ward_en, ward_type, institution from ref.wards;
-create view api.phenotypes as select marker, organism from ref.phenotypes;
+-- Filter pickers and labels.
+create view api.ref_organisms as select name, short_name, whonet_code, gram, org_group from ref.organisms;
+create view api.ref_antibiotics as
+  select antibiotic_code, antibiotic, antibiotic_fi, class, reported_for from ref.antibiotics;
+create view api.ref_wards as select ward_code, ward_fi, ward_en, ward_type, institution from ref.wards;
+create view api.ref_phenotypes as select marker, organism from ref.phenotypes;
+create view api.ref_weeks as
+  select g as week_idx, ref.week_label(g) as label, ref.week_start(g) as week_start
+  from generate_series(1, 156) g;
 
 -- ---------------------------------------------------------------------------------------------
 -- Security: RLS on every table (no policies = no direct access for anon/authenticated);
