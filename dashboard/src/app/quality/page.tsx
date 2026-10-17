@@ -85,7 +85,7 @@ export default async function QualityPage() {
         </div>
       </Section>
 
-      {latest && (
+      {latest && Object.keys(latest.dedup_52w).length > 0 && (
         <Section
           title="First-isolate de-duplication"
           subtitle={`Last 52 weeks to ${latest.week_label}: repeat isolates from the same patient, organism and specimen are removed before any rate (CLSI M39).`}

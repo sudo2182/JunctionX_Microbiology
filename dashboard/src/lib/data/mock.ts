@@ -22,7 +22,7 @@ import type {
   Specimen,
   WardComparisonRow,
 } from "./types";
-import { PHENOTYPE_CODES } from "./types";
+import { isActive, PHENOTYPE_CODES } from "./types";
 
 // Mock source: reads the compact JSON written by scripts/build_mock.py and returns rows shaped
 // exactly like the api views. The replay cursor comes from MOCK_CURSOR_WEEK (default 91 = 2025-W26,
@@ -185,7 +185,7 @@ function episodes(): AlertDetail[] {
   // Same order as the inbox and the RSS feed: active first, then rank, then recency.
   return out.sort(
     (a, b) =>
-      Number(a.status === "resolved") - Number(b.status === "resolved") ||
+      Number(!isActive(a.status)) - Number(!isActive(b.status)) ||
       b.rank - a.rank ||
       b.last_fired_week_idx - a.last_fired_week_idx,
   );
@@ -274,6 +274,8 @@ export const mockSource: DataSource = {
   },
 
   async antibiogram(specimen, scope) {
+    // Mirrors api.antibiogram: hospital and ward scopes only, no phenotype markers.
+    if (scope.scope_type !== "hospital" && scope.scope_type !== "ward") return [];
     const t = cursor();
     const rows: AntibiogramRow[] = [];
     for (const organism of load().ref.organisms.map((o) => o.organism)) {
@@ -320,7 +322,8 @@ export const mockSource: DataSource = {
     const t = cursor();
     const cells: HeatmapCell[] = [];
     for (const organism of load().ref.organisms.map((o) => o.organism)) {
-      for (const code of testedCodes(organism, specimen, scope)) {
+      // Mirrors api.heatmap: antibiotics only, phenotype shares live in the trend views.
+      for (const code of testedCodes(organism, specimen, scope).filter((c) => !isPhenotype(c))) {
         const c = { organism, antibiotic_code: code, specimen };
         const [n, x] = at(c, scope, windowWeeks, t);
         const r = rate(n, x);

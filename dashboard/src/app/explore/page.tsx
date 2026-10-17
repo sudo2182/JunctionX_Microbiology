@@ -42,7 +42,6 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
     .filter((a) => f.specimen === "urine" || a.reported_for === "all")
     .map((a) => a.antibiotic_code)
     .filter((c) => cells.some((x) => x.antibiotic_code === c));
-  const phenoCodes = ["ESBL", "MRSA", "VRE", "CPE"].filter((c) => cells.some((x) => x.antibiotic_code === c && x.n_tested > 0));
 
   // Annual first-isolate rates: 52-week windows ending at each anniversary of the dataset start.
   const years = [52, 104, 156]
@@ -67,7 +66,7 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
         title={`Organism × antibiotic · ${where} · ${SPECIMEN_LABEL[f.specimen]} · last ${f.window} weeks`}
         subtitle="% resistant among first isolates. Grey cells have fewer than 30 isolates and show the count; IR is intrinsic resistance, excluded from every rate."
       >
-        <Heatmap cells={cells} codes={[...codes, ...phenoCodes]} selected={[f.organism, f.abx]} />
+        <Heatmap cells={cells} codes={codes} selected={[f.organism, f.abx]} />
       </Section>
 
       <div id="drill" className="mb-3 mt-8 text-sm font-medium text-ink-2">

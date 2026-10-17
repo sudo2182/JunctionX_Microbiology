@@ -115,7 +115,8 @@ export interface WardComparisonRow {
 export type AlertType = "rate" | "count" | "sentinel" | "drift";
 export type Severity = "critical" | "high" | "medium" | "low";
 export type Confidence = "high" | "medium" | "low";
-export type AlertStatus = "open" | "escalated" | "resolved";
+export type AlertStatus = "open" | "escalated" | "resolved" | "acknowledged" | "dismissed";
+export const isActive = (s: AlertStatus) => s === "open" || s === "escalated";
 
 /** The evidence JSON stored with each firing (BUILD_PLAN.md section 7.4). */
 export interface AlertEvidence {

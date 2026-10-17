@@ -32,7 +32,7 @@ export function AlertCard({
         <ConfidenceLabel confidence={alert.confidence} />
         <span className="text-xs text-muted">· {TYPE_LABEL[alert.type]} signal</span>
         <span className="ml-auto text-xs text-muted">
-          {alert.status === "resolved" ? "Resolved" : alert.status === "escalated" ? "Escalated" : "Open"}
+          <span className="capitalize">{alert.status}</span>
           {" · "}
           {alert.last_fired_week_idx === cursorWeek ? "fired this week" : `last fired ${cursorWeek - alert.last_fired_week_idx} wk ago`}
         </span>

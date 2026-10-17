@@ -3,7 +3,7 @@ import { AlertCard } from "@/components/AlertCard";
 import { ParamSelect } from "@/components/ParamSelect";
 import { PageTitle, Section } from "@/components/Section";
 import { getData } from "@/lib/data";
-import type { AlertEpisode, Severity } from "@/lib/data/types";
+import { isActive, type AlertEpisode, type Severity } from "@/lib/data/types";
 import { shortOrganism } from "@/lib/format";
 import { one, organismFromSlug, slug, type SearchParams } from "@/lib/filters";
 
@@ -31,7 +31,7 @@ export default async function AlertsPage({ searchParams }: { searchParams: Promi
       (!marker || a.marker === marker) &&
       (!organism || a.organism === organism) &&
       (!type || a.type === type) &&
-      (state === "all" || (state === "active" ? a.status !== "resolved" : a.status === "resolved")),
+      (state === "all" || (state === "active" ? isActive(a.status) : !isActive(a.status))),
   );
   const visible = shown.slice(0, 60);
   const sparks = await Promise.all(
@@ -57,7 +57,7 @@ export default async function AlertsPage({ searchParams }: { searchParams: Promi
           label="Status"
           options={[
             ["", "Open and escalated"],
-            ["resolved", "Resolved"],
+            ["resolved", "Resolved, acknowledged or dismissed"],
             ["all", "All"],
           ]}
         />

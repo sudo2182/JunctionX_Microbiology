@@ -7,7 +7,7 @@ import { KpiTile } from "@/components/KpiTile";
 import { PageTitle, Section } from "@/components/Section";
 import { TrendChart } from "@/components/TrendChart";
 import { getData } from "@/lib/data";
-import type { Combo, Specimen } from "@/lib/data/types";
+import { isActive, type Combo, type Specimen } from "@/lib/data/types";
 import { PHENOTYPE_LABEL, scopeLabel, shortOrganism, SPECIMEN_LABEL } from "@/lib/format";
 import { filtersToQuery, parseFilters, type SearchParams } from "@/lib/filters";
 
@@ -41,7 +41,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
   ]);
   const inScope = alerts.filter(
     (a) =>
-      a.status !== "resolved" &&
+      isActive(a.status) &&
       (f.scope.scope_type === "hospital" ||
         (a.scope_type === f.scope.scope_type && a.scope_value === f.scope.scope_value)),
   );
@@ -137,6 +137,9 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           </Link>
         }
       >
+        {(f.scope.scope_type === "setting" || f.scope.scope_type === "onset") && (
+          <p className="mb-2 text-xs text-ink-2">The antibiogram is published for the whole hospital and for single wards only.</p>
+        )}
         <Antibiogram rows={antibiogram} antibiotics={ref.antibiotics} measure={antibiogramMeasure} scope={f.scope} />
       </Section>
     </>

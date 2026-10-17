@@ -58,26 +58,26 @@ Alerts: `/alerts?severity=high&ward=URO&marker=ESBL&organism=escherichia-coli&ty
 
 ## Data contract
 
-`src/lib/data/types.ts` holds one TypeScript row type per `api` view; both sources return exactly these
-shapes, so switching to Supabase needs no UI change. The views the Supabase source queries:
+The views are defined in `supabase/migrations/*_api_views.sql` (foundation PR). `src/lib/data/types.ts` holds
+the row types the UI works with; `src/lib/data/supabase.ts` maps each view's columns onto them, so a column
+change touches that one file. The mock source returns the same types.
 
-| View | Used by | Filtered on |
+| View | Used by | How it is read |
 |---|---|---|
-| `api.replay_status` | banner | single row |
-| `api.current_vs_baseline` | KPI tiles | scope, organism, antibiotic_code |
-| `api.rate_series` | trends, sparklines, splits | organism, antibiotic_code, specimen, scope, window_weeks |
-| `api.antibiogram` | overview table | specimen, scope |
-| `api.heatmap` | explore | specimen, scope, window_weeks |
-| `api.ward_comparison` | forest plot | organism, antibiotic_code, specimen, window_weeks |
-| `api.alerts`, `api.alert_detail` | B | `alert_id` or `episode_id` |
-| `api.benchmarks` | dotted benchmark line | organism, antibiotic_code |
-| `api.data_quality` | quality page | latest `week_idx` first |
-| `api.ref_antibiotics`, `ref_wards`, `ref_organisms`, `ref_intrinsic_resistance`, `ref_weeks` | pickers, labels | — |
+| `api.replay_status` | banner, cursor | single row; `data_through`, `last_run_*` |
+| `api.current_vs_baseline` | KPI tiles | scope, organism, antibiotic; `*_current` (auto-widened 4 → 8 → 13) vs `*_52w` |
+| `api.rate_series` | trends, sparklines, splits | combination, scope, window (1, 4, 8, 13, 52) |
+| `api.antibiogram` | overview table | specimen + hospital/ward scope; %S = n − x |
+| `api.heatmap`, `api.ward_comparison` | explore | filtered to `end_week_idx` = cursor |
+| `api.ref_intrinsic_resistance` | IR cells | overlaid on heatmap and antibiogram |
+| `api.alerts`, `api.alert_detail` | B | lookup by `episode_id` or `latest_evidence->>alert_id`; firings from `alert_detail` |
+| `api.benchmarks` | dotted benchmark line | organism, antibiotic, specimen or `all` |
+| `api.data_quality` (+ `api.pipeline_runs`) | quality page | long format, pivoted per run |
+| `api.ref_antibiotics`, `ref_wards`, `ref_organisms`, `ref_phenotypes`, `ref_weeks` | pickers, labels | |
 
 Scope is `(scope_type, scope_value)`: `('hospital','ALL')`, `('ward','URO')`, `('setting','ed')`,
-`('onset','hospital')`. Phenotype shares use `antibiotic_code` = `ESBL`/`MRSA`/`VRE`/`CPE`, and specimen
-`all` is allowed for them. Alert evidence follows the §7.4 JSON. If the pipeline's view columns differ, change
-`types.ts` and `supabase.ts` only.
+`('onset','hospital')`. Phenotype shares use `antibiotic_code` = `ESBL`/`MRSA`/`VRE`/`CPE`. Alert evidence
+follows the §7.4 JSON.
 
 ## Mock data
 
