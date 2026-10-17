@@ -34,3 +34,8 @@ jobs:
           done
       - run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
       - run: supabase db push
+      - name: Next steps
+        run: |
+          msg="Migrations applied. Next: in Supabase, Project Settings -> API -> Exposed schemas, add 'api' (only api). Then run the replay workflow with seed ticked and reset_to = 85."
+          echo "::notice title=Expose the api schema::$msg"
+          { echo "### Migrations applied"; echo; echo "1. Supabase -> Project Settings -> API -> Exposed schemas: add \`api\` (keep the other new schemas private)."; echo "2. Actions -> replay -> Run workflow with **seed** ticked and **reset_to = 85**."; } >> "$GITHUB_STEP_SUMMARY"

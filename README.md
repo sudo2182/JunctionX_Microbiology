@@ -104,9 +104,10 @@ is needed.
 
 ## Supabase setup (project `jofgoferdnkihimvencr`)
 
-1. **Expose only `api`.** Project Settings -> API -> Exposed schemas: add `api` (keep `public`,
-   `graphql_public`). Do not expose `staging`, `lab`, `ref`, `bench` or `agg`.
-2. **Create the GitHub environment `supabase-prod`** (repo Settings -> Environments) with these
+Do these in order. The `api` schema only exists after step 2, and GitHub only lets you run
+`migrate` and `replay` by hand once the workflows are on `main`.
+
+1. **Create the GitHub environment `supabase-prod`** (repo Settings -> Environments) with these
    secrets:
 
    | Secret | Where to find it | Used by |
@@ -119,8 +120,11 @@ is needed.
 
    Optional repository variables: `SUPABASE_PROJECT_REF` (defaults to `jofgoferdnkihimvencr`),
    `APP_BASE_URL`, and `REPLAY_CRON_ENABLED=true` to turn on the hourly replay.
-3. **Apply the migrations**: merge to `main` (runs `migrate.yml`) or run it from the Actions tab.
-   From a laptop instead: `supabase link --project-ref jofgoferdnkihimvencr && supabase db push`.
+2. **Apply the migrations** (this creates the `api` schema): merge this PR to `main`, which runs
+   `migrate.yml` automatically, or run it later from the Actions tab. From a laptop instead:
+   `supabase link --project-ref jofgoferdnkihimvencr && supabase db push`.
+3. **Expose only `api`.** Project Settings -> API -> Exposed schemas: add `api` (keep `public`,
+   `graphql_public`). Do not expose `staging`, `lab`, `ref`, `bench` or `agg`.
 4. **First load**: Actions -> replay -> Run workflow with `seed` ticked and `reset_to = 85`.
 5. **Demo**: Run workflow with `advance = 1` (or 5). Rehearse from `reset_to = 85`.
 
