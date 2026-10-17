@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { Activity, Building2, Database, Map, Radar, Stethoscope } from "lucide-react";
+import { Activity, Building2, Database, Map, Newspaper, Radar, Stethoscope } from "lucide-react";
 import { useAmr } from "@/lib/amr/store";
 
 const NAV = [
@@ -10,6 +10,7 @@ const NAV = [
   { to: "/detection", label: "Cluster detection", icon: Radar },
   { to: "/risk", label: "Risk predictor", icon: Stethoscope },
   { to: "/records", label: "Records", icon: Database },
+  { to: "/announcements", label: "ECDC announcements", icon: Newspaper },
 ] as const;
 
 export function AppShell({ children }: { children: ReactNode }) {
