@@ -1,0 +1,13 @@
+HealthTopic,Population,Indicator,Unit,Time,RegionCode,RegionName,NumValue,TxtValue
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,"R - resistant isolates, percentage",%,2019,FI,Finland,11.1,
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,Total tested isolates,N,2019,FI,Finland,111,
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,"R - resistant isolates, percentage",%,2019,EU/EEA,EU/EEA,22.2,
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,Total tested isolates,N,2019,EU/EEA,EU/EEA,222,
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,"R - resistant isolates, percentage",%,2019,SE,Sweden,33.3,
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,"S - susceptible isolates, percentage",%,2019,FI,Finland,44.4,
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,"R - resistant isolates, percentage",%,2030,FI,Finland,5.5,
+Antimicrobial resistance,Staphylococcus aureus|Meticillin (MRSA),"R - resistant isolates, percentage",%,2019,FI,Finland,6.6,
+Antimicrobial resistance,Staphylococcus aureus|Meticillin (MRSA),Total tested isolates,N,2019,FI,Finland,66,
+Antimicrobial resistance,Pseudomonas aeruginosa|Ceftazidime,"R - resistant isolates, percentage",%,2019,FI,Finland,,
+Antimicrobial resistance,Pseudomonas aeruginosa|Ceftazidime,Total tested isolates,N,2019,FI,Finland,77,
+Antimicrobial resistance,Klebsiella pneumoniae|Carbapenems,Total tested isolates,N,2019,FI,Finland,88,
