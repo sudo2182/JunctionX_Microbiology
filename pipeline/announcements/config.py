@@ -22,8 +22,13 @@ DEFAULT_USER_AGENT = os.environ.get(
 
 DEFAULT_TIMEOUT_SECONDS = int(os.environ.get("ECDC_FEED_TIMEOUT", "20"))
 
+# bench.sources row (migration 20261019000001); also the dataset name in bench.import_runs.
+SOURCE_ID = "ecdc_rss"
+DATASET = "ecdc_rss"
 
-# Official feeds verified against https://www.ecdc.europa.eu/en/rss-feeds
+
+# Official feeds, all listed on https://www.ecdc.europa.eu/en/rss-feeds (checked 2026-10-17).
+# Each feed shows only its latest ~10 items, so the checker must run at least daily not to miss any.
 DEFAULT_ECDC_FEEDS: list[FeedConfig] = [
     FeedConfig(
         key="surveillance",
@@ -60,6 +65,12 @@ DEFAULT_ECDC_FEEDS: list[FeedConfig] = [
         name="News and press releases",
         url="https://www.ecdc.europa.eu/en/taxonomy/term/1307/feed",
         priority=6,
+    ),
+    FeedConfig(
+        key="epi_updates",
+        name="Epidemiological updates",
+        url="https://www.ecdc.europa.eu/en/taxonomy/term/1310/feed",
+        priority=7,
     ),
 ]
 

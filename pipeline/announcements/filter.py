@@ -26,56 +26,57 @@ class Rule:
     weight: int = 10
 
 
-# Tier 1: Explicit AMR surveillance, phenotype, and resistance terms.
-# Uses word boundaries (\b) and accounts for hyphenation, spaces, and plurals.
+# Rules are (regex, label). Matching is case-insensitive, except acronyms wrapped in (?-i:...), which must be
+# upper case so that names and ordinary words ("Amr", "Caesar", "cre") do not match. "_" stands for one or more
+# spaces or hyphens, so "antimicrobial resistance", "antimicrobial-resistance" and line-wrapped text all match.
+_ = r"[\s\-\u2010\u2011]+"
+
+# Tier 1 -> 'relevant': explicit AMR surveillance, phenotype and resistance terms.
 TIER_1_PATTERNS = [
-    (r"\bantimicrobial\s+resistance\b", "antimicrobial resistance"),
-    (r"\bantibiotic\s+resistance\b", "antibiotic resistance"),
-    (r"\b\bAMR\b", "AMR"),
-    (r"\bantimicrobial\s+susceptibility\b", "antimicrobial susceptibility"),
-    (r"\bresistant\s+bacteria\b", "resistant bacteria"),
-    (r"\b(multi|multidrug|multi-drug)[\s-]resistant\b", "multidrug-resistant"),
-    (r"\bMDRO\b", "MDRO"),
-    (r"\bcarbapenem[\s-]resist(ant|ance)\b", "carbapenem resistance"),
-    (r"\bcarbapenemase[\s-]producing\b", "carbapenemase-producing"),
-    (r"\bcarbapenemase(s)?\b", "carbapenemase"),
-    (r"\bCPE\b", "CPE"),
-    (r"\bCRE\b", "CRE"),
-    (r"\bESBL(s)?\b", "ESBL"),
-    (r"\bextended[\s-]spectrum\s+(beta|β)[\s-]lactamase(s)?\b", "extended-spectrum beta-lactamase"),
-    (r"\bEARS[\s-]Net\b", "EARS-Net"),
-    (r"\bCAESAR\b", "CAESAR"),
-    (r"\bMRSA\b", "MRSA"),
-    (r"\bmethicillin[\s-]resistant\s+Staphylococcus\s+aureus\b", "methicillin-resistant Staphylococcus aureus"),
-    (r"\bVRE\b", "VRE"),
-    (r"\bvancomycin[\s-]resistant\b", "vancomycin-resistant"),
-    (r"\bcolistin[\s-]resist(ant|ance)\b", "colistin resistance"),
-    (r"\bantimicrobial\s+stewardship\b", "antimicrobial stewardship"),
-    (r"\bantimicrobial\s+consumption\b", "antimicrobial consumption"),
-    (r"\bantibiotic\s+consumption\b", "antibiotic consumption"),
-    (r"\bantimicrobial\s+use\b", "antimicrobial use"),
-    (r"\bpan[\s-]drug[\s-]resistant\b", "pan-drug-resistant"),
-    (r"\bextensively[\s-]drug[\s-]resistant\b", "extensively drug-resistant"),
-    (r"\bXDR\b", "XDR"),
-    (r"\bEUCAST\b", "EUCAST"),
+    (rf"\bantimicrobial{_}resistan(ce|t)\b", "antimicrobial resistance"),
+    (rf"\bantibiotic{_}resistan(ce|t)\b", "antibiotic resistance"),
+    (r"(?-i:\bAMR\b)", "AMR"),
+    (rf"\bantimicrobial{_}susceptibility\b", "antimicrobial susceptibility"),
+    (rf"\bresistant{_}bacteri(a|um)\b", "resistant bacteria"),
+    (rf"\b(multi(?:{_})?drug|multi)(?:{_})?resistan(t|ce)\b", "multidrug-resistant"),
+    (r"(?-i:\bMDROs?\b)", "MDRO"),
+    (rf"\bcarbapenem{_}resistan(t|ce)\b", "carbapenem resistance"),
+    (r"\bcarbapenemases?\b", "carbapenemase"),
+    (r"(?-i:\b(CPE|CPO|CRE|CRAB|CRPA)s?\b)", "carbapenem-resistant organism acronym"),
+    (r"(?-i:\bESBLs?\b)", "ESBL"),
+    (rf"\bextended{_}spectrum{_}(beta|\u03b2)(?:{_})?lactamases?\b", "extended-spectrum beta-lactamase"),
+    (rf"(?-i:\bEARS{_}Net\b)", "EARS-Net"),
+    (r"(?-i:\bCAESAR\b)", "CAESAR"),
+    (r"(?-i:\bMRSA\b)", "MRSA"),
+    (rf"\bmeth?icillin{_}resistant\b", "methicillin-resistant"),
+    (r"(?-i:\bVRE\b)", "VRE"),
+    (rf"\bvancomycin{_}resistan(t|ce)\b", "vancomycin resistance"),
+    (rf"\bcolistin{_}resistan(t|ce)\b", "colistin resistance"),
+    (rf"\bantimicrobial{_}stewardship\b", "antimicrobial stewardship"),
+    (rf"\b(antimicrobial|antibiotic){_}(consumption|use)\b", "antimicrobial consumption"),
+    (rf"\bpan(?:{_})?drug{_}resistant\b", "pan-drug-resistant"),
+    (rf"\bextensively{_}drug{_}resistant\b", "extensively drug-resistant"),
+    (r"(?-i:\bXDR\b)", "XDR"),
+    (r"(?-i:\bEUCAST\b)", "EUCAST"),
 ]
 
-# Tier 2: Healthcare-associated infections (HAI) or priority pathogen reports
-# that warrant clinical/epidemiological review if resistance is not explicitly stated in the title.
+# Tier 2 -> 'review': healthcare-associated infections, priority pathogens and resistance wording that may not be
+# antibacterial (e.g. "drug-resistant" also covers antivirals). A human decides.
 TIER_2_PATTERNS = [
-    (r"\bhealthcare[\s-]associated\s+infection(s)?\b", "healthcare-associated infections"),
-    (r"\bhospital[\s-]acquired\s+infection(s)?\b", "hospital-acquired infections"),
+    (rf"\b(healthcare|health{_}care){_}associated{_}infections?\b", "healthcare-associated infections"),
+    (rf"\bhospital{_}acquired{_}infections?\b", "hospital-acquired infections"),
     (r"\bnosocomial\b", "nosocomial"),
-    (r"\bAcinetobacter\s+baumannii\b", "Acinetobacter baumannii"),
-    (r"\bKlebsiella\s+pneumoniae\b", "Klebsiella pneumoniae"),
-    (r"\bPseudomonas\s+aeruginosa\b", "Pseudomonas aeruginosa"),
-    (r"\bEnterococcus\s+faecium\b", "Enterococcus faecium"),
-    (r"\bEnterococcus\s+faecalis\b", "Enterococcus faecalis"),
-    (r"\bClostridioides\s+difficile\b", "Clostridioides difficile"),
+    (rf"\bdrug{_}resistan(t|ce)\b", "drug-resistant"),
+    (rf"\bAcinetobacter{_}baumannii\b", "Acinetobacter baumannii"),
+    (rf"\bKlebsiella{_}pneumoniae\b", "Klebsiella pneumoniae"),
+    (rf"\bPseudomonas{_}aeruginosa\b", "Pseudomonas aeruginosa"),
+    (rf"\bEnterococcus{_}faeci(um|alis)\b", "Enterococcus"),
+    (rf"\bEnterobacter{_}cloacae\b", "Enterobacter cloacae"),
+    (rf"\bClostridioides{_}difficile\b", "Clostridioides difficile"),
     (r"\bC\.\s*difficile\b", "C. difficile"),
-    (r"\bhospital\s+outbreak(s)?\b", "hospital outbreak"),
-    (r"\binfection\s+prevention\s+and\s+control\b", "infection prevention and control"),
-    (r"\bIPC\s+guidance\b", "IPC guidance"),
+    (rf"\bhospital{_}outbreaks?\b", "hospital outbreak"),
+    (rf"\binfection{_}prevention{_}and{_}control\b", "infection prevention and control"),
+    (r"(?-i:\bIPC\b)", "IPC"),
 ]
 
 

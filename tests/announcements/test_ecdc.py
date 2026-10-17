@@ -16,6 +16,7 @@ from pipeline.announcements.filter import (
 )
 from pipeline.announcements.parser import (
     AnnouncementItem,
+    FeedParseError,
     canonicalize_url,
     clean_html_text,
     parse_feed,
@@ -150,10 +151,16 @@ def test_parse_missing_dates_and_guid_fallback():
 
 
 def test_parse_empty_or_malformed_xml():
+    # An empty body, a non-feed document or an HTML error page is a failure, not a quiet day.
     feed_cfg = FeedConfig(key="empty", name="Empty Feed", url="https://example.com/empty")
-    assert parse_feed("", feed_cfg) == []
-    assert parse_feed("   ", feed_cfg) == []
-    assert parse_feed("<not-rss>garbage</not-rss>", feed_cfg) == []
+    for bad in ("", "   ", "<not-rss>garbage</not-rss>", "<html><body>503 Service Unavailable</body></html>"):
+        with pytest.raises(FeedParseError):
+            parse_feed(bad, feed_cfg)
+
+
+def test_parse_valid_feed_with_no_items():
+    feed_cfg = FeedConfig(key="empty", name="Empty Feed", url="https://example.com/empty")
+    assert parse_feed('<rss version="2.0"><channel><title>ECDC</title></channel></rss>', feed_cfg) == []
 
 
 # ---------------------------------------------------------------------------
@@ -170,7 +177,7 @@ def test_parse_empty_or_malformed_xml():
         ("Emergence of ESBL-producing strains in Europe", RelevanceCategory.RELEVANT, "ESBL"),
         ("Updated EARS-Net annual data release", RelevanceCategory.RELEVANT, "EARS-Net"),
         ("Incidence of MRSA in blood cultures", RelevanceCategory.RELEVANT, "MRSA"),
-        ("Investigation of vancomycin-resistant enterococci", RelevanceCategory.RELEVANT, "vancomycin-resistant"),
+        ("Investigation of vancomycin-resistant enterococci", RelevanceCategory.RELEVANT, "vancomycin resistance"),
         ("Colistin resistance gene detected in travel cohort", RelevanceCategory.RELEVANT, "colistin resistance"),
         ("Hospital stewardship guide for multi-drug resistant bugs", RelevanceCategory.RELEVANT, "multidrug-resistant"),
         (
@@ -316,7 +323,117 @@ def test_db_upsert_idempotent():
         (item2, "relevant", ["MRSA"]),
     ]
 
-    stats = upsert_announcements(mock_conn, items, source_id="ecdc", store_unrelated=True)
+    stats = upsert_announcements(mock_conn, items, source_id="ecdc_rss", store_unrelated=True)
     assert stats["inserted"] == 1
-    assert stats["updated"] == 1
+    assert stats["already_stored"] == 1
     assert mock_conn.commit.called
+
+
+# ---------------------------------------------------------------------------
+# 7. Dates, keyword variants, duplicates across feeds, run status
+# ---------------------------------------------------------------------------
+
+def test_published_at_is_utc_whatever_the_machine_timezone(monkeypatch):
+    # "Thu, 15 Oct 2026 12:00:00 +0200" is 10:00 UTC. mktime() would have shifted it by the local offset.
+    import time
+
+    monkeypatch.setenv("TZ", "Europe/Helsinki")
+    time.tzset()
+    try:
+        items = parse_feed(SAMPLE_RSS_XML, FeedConfig(key="t", name="T", url="https://example.com/rss"))
+    finally:
+        monkeypatch.delenv("TZ")
+        time.tzset()
+    assert items[0].published_at == datetime(2026, 10, 15, 10, 0, tzinfo=UTC)
+
+
+@pytest.mark.parametrize(
+    "text,expected_term",
+    [
+        ("Antimicrobial-resistance surveillance network meeting", "antimicrobial resistance"),
+        ("Rise in antibiotic-resistant infections", "antibiotic resistance"),
+        ("Antimicrobial\nresistance in Europe", "antimicrobial resistance"),
+        ("Multiresistant bacteria in long-term care", "multidrug-resistant"),
+        ("Multidrug-resistant organisms in ICUs", "multidrug-resistant"),
+        ("ESBLs in Klebsiella pneumoniae", "ESBL"),
+        ("Extended-spectrum beta lactamase producers", "extended-spectrum beta-lactamase"),
+        ("Protocol for the carbapenem-resistant Enterobacter cloacae complex pilot survey", "carbapenem resistance"),
+        ("CPE outbreak report", "carbapenem-resistant organism acronym"),
+    ],
+)
+def test_relevance_keyword_variants(text, expected_term):
+    cat, terms = classify_announcement(title=text, summary="")
+    assert cat == RelevanceCategory.RELEVANT.value
+    assert expected_term in terms
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Amr Diab to perform in Brussels",   # a name, not the acronym
+        "Caesar salad and food safety",      # not the CAESAR network
+        "Creme fraiche recall: cre batch",   # lower-case 'cre'
+        "Multiple respiratory viruses circulating",
+    ],
+)
+def test_relevance_acronyms_are_case_sensitive(text):
+    assert classify_announcement(title=text, summary="") == (RelevanceCategory.UNRELATED.value, [])
+
+
+def test_drug_resistant_alone_needs_review():
+    # Could be antiviral (HIV) or antibacterial: a human decides.
+    cat, terms = classify_announcement(title="Drug-resistant HIV in Europe", summary="")
+    assert cat == RelevanceCategory.REVIEW.value
+    assert terms == ["drug-resistant"]
+
+
+def _fetch_from(contents: dict[str, str]):
+    from pipeline.announcements.fetcher import FetchResult
+
+    def fake(url, **kwargs):
+        if url not in contents:
+            raise FeedFetchError(url, "Simulated network error")
+        return FetchResult(content=contents[url], status_code=200)
+    return fake
+
+
+def test_runner_skips_items_seen_in_two_feeds():
+    a = FeedConfig(key="a", name="A", url="https://example.com/a")
+    b = FeedConfig(key="b", name="B", url="https://example.com/b")
+    with mock.patch("pipeline.announcements.runner.fetch_feed",
+                    side_effect=_fetch_from({a.url: SAMPLE_RSS_XML, b.url: SAMPLE_RSS_XML})):
+        summary = run_checker(feeds=[a, b], dry_run=True)
+    m = summary["metrics"]
+    assert m["items_fetched"] == 8
+    assert m["duplicates_in_run"] == 4
+    assert m["duplicates_skipped"] == 4
+    assert len(summary["items"]) == 4
+    assert {it["feed"] for it in summary["items"]} == {"a"}  # first feed in priority order wins
+
+
+def test_runner_reports_failed_when_every_feed_fails():
+    feeds = [FeedConfig(key=k, name=k, url=f"https://example.com/{k}") for k in ("x", "y")]
+    with mock.patch("pipeline.announcements.runner.fetch_feed", side_effect=_fetch_from({})):
+        summary = run_checker(feeds=feeds, dry_run=True)
+    assert summary["status"] == "failed"
+    assert summary["metrics"]["feeds_failed"] == 2
+
+
+def test_runner_counts_a_malformed_response_as_a_failed_feed():
+    good = FeedConfig(key="good", name="Good", url="https://example.com/good")
+    html = FeedConfig(key="html", name="HTML", url="https://example.com/html")
+    with mock.patch("pipeline.announcements.runner.fetch_feed",
+                    side_effect=_fetch_from({good.url: SAMPLE_RSS_XML, html.url: "<html>Maintenance</html>"})):
+        summary = run_checker(feeds=[good, html], dry_run=True)
+    assert summary["status"] == "partial_success"
+    assert "not an RSS/Atom feed" in summary["metrics"]["errors"]["html"]
+    assert summary["metrics"]["items_fetched"] == 4
+
+
+def test_dry_run_never_touches_the_connection():
+    conn = mock.MagicMock()
+    feed = FeedConfig(key="a", name="A", url="https://example.com/a")
+    with mock.patch("pipeline.announcements.runner.fetch_feed", side_effect=_fetch_from({feed.url: SAMPLE_RSS_XML})):
+        run_checker(feeds=[feed], conn=conn, dry_run=True)
+    conn.cursor.assert_not_called()
+    conn.commit.assert_not_called()

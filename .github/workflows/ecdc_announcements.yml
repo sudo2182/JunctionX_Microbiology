@@ -1,19 +1,21 @@
 name: ecdc-announcements
 
-# Monitor official ECDC RSS feeds for AMR announcements and store in bench.announcements.
-# Runs daily at 06:00 UTC, or on-demand via workflow_dispatch.
+# ECDC RSS feeds -> bench.announcements (api.announcements). Real-world news, so separate from the simulated weekly
+# replay. Each ECDC feed lists only its latest ~10 items, hence daily. Run it with "Run workflow"; the daily cron
+# only runs once the repository variable ANNOUNCEMENTS_CRON_ENABLED is set to "true" (after migration
+# 20261019000001 is applied).
 
 on:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "23 6 * * *"
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Dry run (fetch & classify without writing to DB)"
+        description: "Fetch and classify only; write nothing"
         type: boolean
         default: false
       only_relevant:
-        description: "Only store AMR relevant & review announcements"
+        description: "Store only 'relevant' and 'review' items"
         type: boolean
         default: false
 
@@ -26,6 +28,7 @@ permissions:
 
 jobs:
   check:
+    if: github.event_name == 'workflow_dispatch' || vars.ANNOUNCEMENTS_CRON_ENABLED == 'true'
     runs-on: ubuntu-latest
     environment: supabase-prod
     timeout-minutes: 10
@@ -43,12 +46,8 @@ jobs:
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
           ONLY_REL: ${{ github.event_name == 'workflow_dispatch' && inputs.only_relevant && '--only-relevant' || '' }}
         run: |
-          if [ -n "$DRY_RUN" ]; then
-            python -m pipeline.announcements --dry-run $ONLY_REL
-          else
-            if [ -z "$SUPABASE_DB_URL" ]; then
-              echo "::error::SUPABASE_DB_URL is not set in the supabase-prod environment."
-              exit 1
-            fi
-            python -m pipeline.announcements --db $ONLY_REL
+          if [ -z "$DRY_RUN" ] && [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL is not set in the supabase-prod environment (see README.md)."
+            exit 1
           fi
+          python -m pipeline.announcements --db $DRY_RUN $ONLY_REL

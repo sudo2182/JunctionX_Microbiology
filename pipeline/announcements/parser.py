@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+import calendar
 import html
 import logging
 import re
 import urllib.parse
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-from time import mktime
 
 import feedparser
 
@@ -75,26 +75,37 @@ def canonicalize_url(raw_url: str | None) -> str:
 
 def parse_datetime(entry: dict) -> datetime | None:
     """Extract and normalize publication timestamp into UTC datetime."""
-    # feedparser parses date into a 9-tuple struct_time in GMT/UTC
+    # feedparser gives a struct_time already converted to UTC. timegm reads it as UTC; mktime would read it as
+    # the machine's local time and shift every date by the local offset.
     st = entry.get("published_parsed") or entry.get("updated_parsed")
     if st:
         try:
-            return datetime.fromtimestamp(mktime(st), tz=UTC)
+            return datetime.fromtimestamp(calendar.timegm(st), tz=UTC)
         except Exception:
             pass
     return None
 
 
+class FeedParseError(ValueError):
+    """The response was not a readable RSS/Atom feed (e.g. an HTML error page served with HTTP 200)."""
+
+
 def parse_feed(content: str, feed_config: FeedConfig) -> list[AnnouncementItem]:
-    """Parse RSS 2.0 / Atom XML into a list of AnnouncementItem objects."""
+    """Parse RSS 2.0 / Atom XML into a list of AnnouncementItem objects.
+
+    A valid feed with no items returns []. An empty body or a document that is not RSS/Atom raises
+    FeedParseError, so the run reports the feed as failed instead of as a quiet day.
+    """
     if not content or not content.strip():
-        return []
+        raise FeedParseError(f"{feed_config.key}: empty response")
 
     parsed = feedparser.parse(content)
-    if parsed.get("bozo") and not parsed.entries:
-        exc = parsed.get("bozo_exception")
-        log.warning("Feed %s has malformed XML and 0 entries: %s", feed_config.key, exc)
-        return []
+    if not parsed.entries and not parsed.get("version"):
+        reason = parsed.get("bozo_exception") or "unknown format"
+        raise FeedParseError(f"{feed_config.key}: not an RSS/Atom feed ({reason})")
+    if parsed.get("bozo"):
+        log.warning("Feed %s is not well-formed XML; using the %d entries recovered: %s",
+                    feed_config.key, len(parsed.entries), parsed.get("bozo_exception"))
 
     # Get feed channel title or fallback to config name
     channel_title = clean_html_text(parsed.feed.get("title")) if parsed.feed else ""

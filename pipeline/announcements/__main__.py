@@ -77,13 +77,12 @@ def main() -> None:
         selected_feeds = DEFAULT_ECDC_FEEDS
 
     conn = None
-    dry_run = args.dry_run or not args.db
+    dry_run = args.dry_run or not args.db  # --dry-run always wins, even with --db
 
-    if args.db:
+    if not dry_run:
         try:
             import psycopg
             conn = psycopg.connect(config.db_url(), autocommit=False, prepare_threshold=None)
-            dry_run = False
         except Exception as exc:
             logging.getLogger("pipeline.announcements").error("Could not connect to database: %s", exc)
             sys.exit(1)
@@ -115,8 +114,11 @@ def main() -> None:
         print(f"  - AMR Relevant:  {m['relevant_items']}")
         print(f"  - Needs Review:  {m['review_items']}")
         print(f"  - Unrelated:     {m['unrelated_items']}")
+        print(f"Duplicates Skipped:{m['duplicates_skipped']:>3} ({m['duplicates_in_run']} in several feeds, "
+              f"{m['already_stored']} stored earlier)")
         if not dry_run:
-            print(f"Database Upsert:   {m['inserted']} new, {m['updated']} updated")
+            print(f"Database:          {m['new_items']} new item(s); "
+                  f"run logged as bench.import_runs #{summary['run_id']}")
         else:
             print("Database Mode:     DRY RUN (no DB changes)")
 
@@ -134,6 +136,9 @@ def main() -> None:
                 print(f"  * [{it['feed']}] {it['title']}")
                 print(f"    Terms: {terms} | Link: {it['url']}")
         print("=" * 65)
+
+    if summary["status"] == "failed":
+        sys.exit(1)  # every feed failed: make the Actions run red
 
 
 if __name__ == "__main__":
