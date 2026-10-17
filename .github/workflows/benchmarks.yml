@@ -1,0 +1,55 @@
+name: benchmarks
+
+# External surveillance data (THL register + Finres) -> bench.observations.
+# Separate from the weekly replay: this data changes at most monthly. Run it with "Run workflow"; the monthly
+# cron only runs once the repository variable BENCHMARKS_CRON_ENABLED is set to "true".
+
+on:
+  schedule:
+    - cron: "17 5 3 * *"
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Which source to import"
+        type: choice
+        options: [all, thl_nidr, finres]
+        default: all
+      dry_run:
+        description: "Parse, validate and diff only; write nothing"
+        type: boolean
+        default: true
+
+concurrency:
+  group: benchmarks
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  import:
+    if: github.event_name == 'workflow_dispatch' || vars.BENCHMARKS_CRON_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: supabase-prod
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+      - run: pip install -r pipeline/requirements.txt
+      - name: Import
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SOURCE: ${{ inputs.source || 'all' }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL is not set in the supabase-prod environment (see README.md)."
+            exit 1
+          fi
+          python -m pipeline.benchmarks --source "$SOURCE" $DRY_RUN

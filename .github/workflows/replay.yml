@@ -1,0 +1,61 @@
+name: replay
+
+# One simulated week per run: advance cursor -> clean -> aggregate -> detect -> feed -> log.
+# The live demo uses "Run workflow" (workflow_dispatch). The hourly cron only runs once the
+# repository variable REPLAY_CRON_ENABLED is set to "true" (Settings -> Secrets and variables -> Actions -> Variables).
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+    inputs:
+      advance:
+        description: "Weeks to advance"
+        default: "1"
+      reset_to:
+        description: "Reset cursor to week_idx and backfill (blank = no reset; demo start = 85)"
+        default: ""
+      seed:
+        description: "(Re)load staging.* from the CSVs first (needed once, before the first replay)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: replay
+  cancel-in-progress: false   # never two replays at once
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    if: github.event_name == 'workflow_dispatch' || vars.REPLAY_CRON_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    environment: supabase-prod
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pipeline/requirements.txt
+      - run: pip install -r pipeline/requirements.txt
+      - name: Check secrets
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL is not set in the supabase-prod environment (see README.md, 'Secrets')."
+            exit 1
+          fi
+      - name: Run pipeline
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+          ADVANCE: ${{ inputs.advance || '1' }}
+          RESET_TO: ${{ inputs.reset_to }}
+          SEED: ${{ inputs.seed && '--seed' || '' }}
+        run: python -m pipeline.run --advance "$ADVANCE" --reset-to "$RESET_TO" $SEED

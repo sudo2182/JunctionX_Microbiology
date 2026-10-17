@@ -1,0 +1,4 @@
+# Feeds + benchmarks (pipeline/feeds, pipeline/benchmarks). Fold into pipeline/requirements.txt when it exists.
+psycopg[binary]>=3.2
+feedparser>=6.0
+pytest>=8.0

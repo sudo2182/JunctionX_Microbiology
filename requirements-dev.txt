@@ -1,0 +1,4 @@
+-r pipeline/requirements.txt
+pytest>=8
+ruff>=0.6
+pdfplumber>=0.11   # only for pipeline/benchmarks/finres_extract.py (developer tool)

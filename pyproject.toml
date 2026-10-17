@@ -1,0 +1,17 @@
+[project]
+name = "amr-watch"
+version = "0.1.0"
+description = "Laboratory-based antimicrobial resistance surveillance (JunctionX Turku)"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["Kasper", "web"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["B905"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

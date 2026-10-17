@@ -1,0 +1,238 @@
+thl.pivot.loadDimensions(
+[
+ {
+  "id": "nidrreportgroup",
+  "label": "Reporting group",
+  "children": [
+   {
+    "id": "nidrreportgroup15",
+    "sid": 878155,
+    "label": "MRSA carriership",
+    "stage": "reportgroup",
+    "code": "1599",
+    "sort": 15,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/1599",
+    "children": []
+   },
+   {
+    "id": "nidrreportgroup16",
+    "sid": 878105,
+    "label": "S. aureus, blood/liquor MRSA",
+    "stage": "reportgroup",
+    "code": "8001",
+    "sort": 16,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/8001",
+    "children": []
+   },
+   {
+    "id": "nidrreportgroup17",
+    "sid": 878263,
+    "label": "S. aureus, blood/liquor not MRSA",
+    "stage": "reportgroup",
+    "code": "8002",
+    "sort": 17,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/8002",
+    "children": []
+   },
+   {
+    "id": "nidrreportgroup77",
+    "sid": 877792,
+    "label": "ESBL-carriership, E.coli",
+    "stage": "reportgroup",
+    "code": "1585",
+    "sort": 77,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/1585",
+    "children": []
+   },
+   {
+    "id": "nidrreportgroup78",
+    "sid": 878134,
+    "label": "ESBL-carriership, K.pneumoniae",
+    "stage": "reportgroup",
+    "code": "1588",
+    "sort": 78,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/1588",
+    "children": []
+   },
+   {
+    "id": "nidrreportgroup79",
+    "sid": 878175,
+    "label": "ESBL blood/liquor, E.coli",
+    "stage": "reportgroup",
+    "code": "1586",
+    "sort": 79,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/1586",
+    "children": []
+   },
+   {
+    "id": "nidrreportgroup80",
+    "sid": 877764,
+    "label": "ESBL blood/liquor, K.pneumoniae",
+    "stage": "reportgroup",
+    "code": "1589",
+    "sort": 80,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/1589",
+    "children": []
+   },
+   {
+    "id": "nidrreportgroup93",
+    "sid": 878111,
+    "label": "VRE carriership",
+    "stage": "reportgroup",
+    "code": "1508",
+    "sort": 93,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/1508",
+    "children": []
+   },
+   {
+    "id": "nidrreportgroup94",
+    "sid": 877916,
+    "label": "VRE blood/liquor",
+    "stage": "reportgroup",
+    "code": "1507",
+    "sort": 94,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/1507",
+    "children": []
+   },
+   {
+    "id": "nidrreportgroup95",
+    "sid": 878012,
+    "label": "CPE carriership, K. pneumoniae",
+    "stage": "reportgroup",
+    "code": "9305",
+    "sort": 95,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/9305",
+    "children": []
+   },
+   {
+    "id": "nidrreportgroup96",
+    "sid": 877958,
+    "label": "CPE carriership, E. coli",
+    "stage": "reportgroup",
+    "code": "9306",
+    "sort": 96,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/9306",
+    "children": []
+   },
+   {
+    "id": "nidrreportgroup97",
+    "sid": 878164,
+    "label": "CPE carriership, E. cloacae",
+    "stage": "reportgroup",
+    "code": "9307",
+    "sort": 97,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/nidrreportgroup/1/reportgroup/9307",
+    "children": []
+   }
+  ]
+ },
+ {
+  "id": "yearmonth",
+  "label": "Time",
+  "children": [
+   {
+    "id": "yearmonth30",
+    "sid": 877827,
+    "label": "Year 2023",
+    "stage": "year",
+    "code": "2023",
+    "sort": 30,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/yearmonth/1/year/2023",
+    "children": []
+   },
+   {
+    "id": "yearmonth31",
+    "sid": 1088395,
+    "label": "Year 2024",
+    "stage": "year",
+    "code": "2024",
+    "sort": 31,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/yearmonth/1/year/2024",
+    "children": []
+   },
+   {
+    "id": "yearmonth32",
+    "sid": 1154759,
+    "label": "Year 2025",
+    "stage": "year",
+    "code": "2025",
+    "sort": 32,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/yearmonth/1/year/2025",
+    "children": []
+   },
+   {
+    "id": "yearmonth33",
+    "sid": 1209311,
+    "label": "Year 2026",
+    "stage": "year",
+    "code": "2026",
+    "sort": 33,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/yearmonth/1/year/2026",
+    "children": []
+   }
+  ]
+ },
+ {
+  "id": "wscmunicipality2022",
+  "label": "Area",
+  "children": [
+   {
+    "id": "wscmunicipality20221",
+    "sid": 877686,
+    "label": "All areas",
+    "stage": "root",
+    "code": "Area",
+    "sort": 1,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/wscmunicipality2022/1/root/Area",
+    "children": []
+   },
+   {
+    "id": "wscmunicipality202217",
+    "sid": 878211,
+    "label": "Southwest Finland wellbeing services county",
+    "stage": "wsc",
+    "code": "05",
+    "sort": 17,
+    "uri": "http://meta.thl.fi/codes/wild/dimension/wscmunicipality2022/1/wsc/05",
+    "children": []
+   }
+  ]
+ },
+ {
+  "id": "measure",
+  "label": "Measure",
+  "children": [
+   {
+    "id": "measure/CASES",
+    "sid": 877837,
+    "label": "Cases",
+    "stage": "leaf",
+    "sort": 2,
+    "decimals": 0,
+    "uri": "http://meta.thl.fi/codes/wild/measure/CASES/1/leaf",
+    "children": []
+   },
+   {
+    "id": "measure/INCI",
+    "sid": 931297,
+    "label": "Incidence",
+    "stage": "leaf",
+    "sort": 3,
+    "decimals": 1,
+    "uri": "http://meta.thl.fi/codes/wild/measure/INCI/1/leaf",
+    "children": []
+   },
+   {
+    "id": "measure/POP",
+    "sid": 433796,
+    "label": "Population",
+    "stage": "leaf",
+    "sort": 4,
+    "decimals": 0,
+    "uri": "http://meta.thl.fi/codes/wild/measure/POP/1/leaf",
+    "children": []
+   }
+  ]
+ }
+]
+)

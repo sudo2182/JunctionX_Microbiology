@@ -1,0 +1,11 @@
+{
+  "release": "2024",
+  "report": "Bakteerien mikrobilääkeresistenssi Suomessa: Finres 2024",
+  "source_url": "https://urn.fi/URN:ISBN:978-952-408-596-0",
+  "pdf_url": "https://www.julkari.fi/bitstreams/4b06f80d-cdde-422c-a33a-c1cd75e1f806/download",
+  "pdf_sha256": "6ab38462848f6c44c684a77f218bcc405d2e9fab56ab780dc46c33fd509cab2e",
+  "retrieved_on": "2026-10-17",
+  "extracted_by": "pipeline.benchmarks.finres_extract",
+  "reviewed": true,
+  "review_note": "All 590 rows cross-checked against a second, independent text extraction of the same PDF (pypdf) and against 9 values read by eye in the report; 5 cells printed as * in the report are left blank."
+}

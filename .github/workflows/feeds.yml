@@ -1,0 +1,31 @@
+name: feeds
+
+# Re-render and upload the RSS alert feeds outside a replay run (e.g. after editing templates).
+# The replay job publishes feeds itself as its last step; this shares its concurrency group so
+# the two never run at the same time.
+on:
+  workflow_dispatch:
+
+concurrency: { group: replay, cancel-in-progress: false }
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: supabase-prod
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip, cache-dependency-path: pipeline/requirements-integration.txt }
+      - run: pip install -r pipeline/requirements-integration.txt
+      - run: python -m pipeline.feeds --db --upload --out-dir build/feeds
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APP_BASE_URL: ${{ vars.APP_BASE_URL }}
+      - uses: actions/upload-artifact@v4
+        with: { name: feeds, path: build/feeds, retention-days: 7 }
