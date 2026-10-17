@@ -1,6 +1,7 @@
 name: migrate
 
-# Applies supabase/migrations/ to the Supabase project with the Supabase CLI.
+# Applies supabase/migrations/ to the Supabase project with the Supabase CLI, connecting with
+# SUPABASE_DB_URL directly (no `supabase link`, so no personal access token is needed).
 on:
   push:
     branches: [main]
@@ -19,10 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: supabase-prod
     env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'jofgoferdnkihimvencr' }}
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
@@ -30,10 +28,9 @@ jobs:
           version: latest
       - name: Check secrets
         run: |
-          for v in SUPABASE_ACCESS_TOKEN SUPABASE_DB_PASSWORD; do
-            if [ -z "${!v}" ]; then echo "::error::$v is not set in the supabase-prod environment"; exit 1; fi
-          done
-      - run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::SUPABASE_DB_URL is not set in the supabase-prod environment"; exit 1
+          fi
       # Migrations applied outside this repo (e.g. through the Supabase dashboard or connector) are
       # recorded under versions that do not match our files, which makes `db push` refuse to run.
       # Every migration here is safe to re-apply, so mark those foreign versions as reverted and let
@@ -46,11 +43,11 @@ jobs:
              where version <> all (string_to_array('$local_versions', ','))" 2>/dev/null || true)
           if [ -n "$remote_only" ]; then
             echo "Versions applied outside this repo, marked reverted: $(echo $remote_only)"
-            supabase migration repair --status reverted $remote_only
+            supabase migration repair --db-url "$SUPABASE_DB_URL" --status reverted $remote_only --yes
           else
             echo "Migration history matches this repo."
           fi
-      - run: supabase db push --include-all
+      - run: supabase db push --db-url "$SUPABASE_DB_URL" --include-all --yes
       - name: Next steps
         run: |
           msg="Migrations applied. Next: in Supabase, Project Settings -> API -> Exposed schemas, add 'api' (only api). Then run the replay workflow with reset_to = 85 (tick seed only if staging is empty)."

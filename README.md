@@ -114,11 +114,10 @@ Do these in order. The `api` schema only exists after step 2, and GitHub only le
 
    | Secret | Where to find it | Used by |
    |---|---|---|
-   | `SUPABASE_DB_URL` | Project Settings -> Database -> Connection string -> **Session pooler** (with the DB password filled in) | `replay.yml` |
+   | `SUPABASE_DB_URL` | Project Settings -> Database -> Connection string -> **Session pooler** (with the DB password filled in; percent-encode any special characters in it) | `replay.yml`, `migrate.yml` |
    | `SUPABASE_URL` | `https://jofgoferdnkihimvencr.supabase.co` | feed upload |
    | `SUPABASE_SERVICE_ROLE_KEY` | Project Settings -> API keys -> service_role | feed upload |
-   | `SUPABASE_ACCESS_TOKEN` | supabase.com -> Account -> Access tokens | `migrate.yml` |
-   | `SUPABASE_DB_PASSWORD` | the database password set at project creation | `migrate.yml` |
+   | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD` | optional; only for running the Supabase CLI from a laptop | none |
 
    Optional repository variables: `SUPABASE_PROJECT_REF` (defaults to `jofgoferdnkihimvencr`),
    `APP_BASE_URL`, and `REPLAY_CRON_ENABLED=true` to turn on the hourly replay.
@@ -141,4 +140,4 @@ can only `select` from `api.*` (RLS is enabled on every other table with no poli
 |---|---|---|
 | `ci.yml` | pull request, push to `main` | `ruff`, `pytest` (incl. migrations + replay against a Postgres service), `gitleaks` |
 | `replay.yml` | `workflow_dispatch` (+ hourly cron when enabled) | `python -m pipeline.run --advance N [--reset-to K] [--seed]` |
-| `migrate.yml` | push to `main` touching `supabase/migrations/**`, or manual | `supabase link` + `supabase db push` |
+| `migrate.yml` | push to `main` touching `supabase/migrations/**`, or manual | `supabase db push --db-url $SUPABASE_DB_URL` (no access token needed) |
