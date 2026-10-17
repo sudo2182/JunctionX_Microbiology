@@ -19,7 +19,8 @@ def test_pairs_percentage_with_denominator_and_filters_scope():
     fi = by[("FI", "Escherichia coli", "third_generation_cephalosporins", "")]
     assert (fi.value, fi.denominator, fi.specimen, fi.geo_level) == (11.1, 111, "blood_csf", "country")
     assert fi.antimicrobial_src == "Third-generation cephalosporins" and fi.release == "2026-10-18"
-    assert by[("EU/EEA", "Escherichia coli", "third_generation_cephalosporins", "")].geo_level == "eu_eea"
+    eu = by[("EU/EEA", "Escherichia coli", "third_generation_cephalosporins", "")]
+    assert eu.geo_level == "eu_eea" and "EUCAST only from 2019" in eu.breakpoint_standard
     mrsa = by[("FI", "Staphylococcus aureus", "", "MRSA")]
     assert mrsa.value == 6.6 and mrsa.denominator == 66
     # Sweden, the 'S' indicator, the 2030 year, a blank value and a denominator without a percentage are not rows
@@ -63,3 +64,11 @@ def test_manifest_gates_the_import(tmp_path):
 def test_load_refuses_unregistered_bytes():
     with pytest.raises(ValidationError, match="not in"):
         ecdc_atlas.load(DATA, "f.csv", manifest={"files": []})
+
+
+def test_missing_data_symbols_are_skipped_not_zero():
+    head = b'Antimicrobial resistance,Escherichia coli|Carbapenems,"R - resistant isolates, percentage  ",%,'
+    extra = head + b"2019,FI,Finland,.,\n" + head + b"2018,FI,Finland,-,\n"
+    rows, skipped = ecdc_atlas.parse(DATA + extra, "f.csv", "2026-10-18", today=TODAY)
+    assert len(rows) == 3 and skipped >= 7
+    assert not any(r.antimicrobial == "carbapenems" for r in rows)

@@ -29,6 +29,11 @@ MANIFEST = Path(__file__).parent / "manifest" / "ecdc_atlas.json"
 REQUIRED = ("HealthTopic", "Population", "Indicator", "Unit", "Time", "RegionCode", "RegionName", "NumValue")
 DEFAULT_COUNTRIES = ("FI",)
 
+# From ECDC's "Information about the Data: Antimicrobial resistance" (Surveillance Atlas, 2025).
+BREAKPOINTS = "EUCAST only from 2019 data onward; earlier years may include other interpretive criteria"
+COVERAGE = ("No percentage is calculated when fewer than 20 isolates were tested; population coverage differs "
+            "between countries and over time")
+
 # Atlas antimicrobial labels (lower case) that denote a phenotype share rather than an antimicrobial group.
 PHENOTYPE_LABELS = {"meticillin (mrsa)": "MRSA", "methicillin (mrsa)": "MRSA"}
 
@@ -115,7 +120,7 @@ def parse(data: bytes, name: str, retrieved_on: str, countries: tuple[str, ...] 
             skipped += 1
             continue
         raw_value = row["NumValue"].strip().replace(",", ".")
-        if raw_value in ("", "-", "NA"):
+        if raw_value in ("", "-", ".", "NA"):      # Atlas symbols: '-' not calculated (<20 isolates), '.' not reported
             skipped += 1
             continue
         try:
@@ -123,7 +128,7 @@ def parse(data: bytes, name: str, retrieved_on: str, countries: tuple[str, ...] 
         except ValueError:
             raise ValidationError(f"{name} line {line_no}: NumValue {row['NumValue']!r} is not a number") from None
         organism, group = (p.strip() for p in population.split("|", 1))
-        geo = ("eu_eea", "EU/EEA", "EU/EEA") if is_eu else ("country", region_code, region_name)
+        geo = ("eu_eea", region_code, region_name) if is_eu else ("country", region_code, region_name)
         cells.setdefault((*geo, year, organism, group), {})[kind] = value
         n_pct += kind == "pct"
     if not n_pct:
@@ -144,6 +149,7 @@ def parse(data: bytes, name: str, retrieved_on: str, countries: tuple[str, ...] 
             antimicrobial_src=group, phenotype=phenotype, specimen="blood_csf",
             indicator="pct_resistant", value=vals["pct"], unit="% of tested isolates",
             denominator=int(n) if n is not None else None,
+            breakpoint_standard=BREAKPOINTS, coverage_note=COVERAGE,
         ))
     return rows, skipped
 
