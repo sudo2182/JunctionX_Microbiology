@@ -9,7 +9,7 @@ import psycopg
 import pytest
 
 from pipeline import db
-from pipeline.benchmarks import ecdc_atlas, finres, store, thl_nidr
+from pipeline.benchmarks import finres, store, thl_nidr
 from pipeline.benchmarks.model import COLUMNS, ValidationError
 
 URL = os.environ.get("TEST_DATABASE_URL")
@@ -141,18 +141,6 @@ def test_newest_release_wins_in_the_view(conn):
     assert float(got) == 11.3
 
 
-def test_group_level_ecdc_rows_are_stored_but_not_compared(conn):
-    data = (FIX / "ecdc_atlas_format_fixture.csv").read_bytes()
-    manifest = {"files": [{"name": "f.csv", "sha256": store.sha256_bytes(data), "retrieved_on": "2026-10-18",
-                           "export_note": "format fixture"}]}
-    batch = ecdc_atlas.load(data, "f.csv", manifest=manifest)
-    store.import_batch(conn, batch)
-    assert scalar(conn, "select count(*) from bench.observations where source_id = 'ecdc_ears_net'") == 3
-    shown = scalar(conn, "select count(*) from api.benchmarks where source like 'EARS-Net%'")
-    assert shown == 1      # only the MRSA phenotype share; the cephalosporin group is not the same measurement as CRO
-    assert scalar(conn, "select antibiotic_code from api.benchmarks where source like 'EARS-Net%'") == "MRSA"
-
-
 def test_comparability_sync_rejects_unknown_local_codes(conn, tmp_path):
     bad = tmp_path / "c.csv"
     header, first = (store.DATA_DIR / "comparability.csv").read_text().splitlines()[:2]
@@ -165,7 +153,7 @@ def test_comparability_sync_rejects_unknown_local_codes(conn, tmp_path):
 def test_comparability_sync_is_idempotent(conn):
     n = scalar(conn, "select count(*) from ref.benchmark_comparability")
     store.sync_comparability(conn)
-    assert scalar(conn, "select count(*) from ref.benchmark_comparability") == n == 56
+    assert scalar(conn, "select count(*) from ref.benchmark_comparability") == n == 44
 
 
 def test_anon_can_read_the_new_views_but_not_the_tables(conn):

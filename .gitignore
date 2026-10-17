@@ -26,6 +26,3 @@ node_modules/
 
 .DS_Store
 
-# Raw manual benchmark exports stay out of git (ECDC asks recipients not to redistribute); see pipeline/benchmarks
-pipeline/benchmarks/raw/*
-!pipeline/benchmarks/raw/README.md

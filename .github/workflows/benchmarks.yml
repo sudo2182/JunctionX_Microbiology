@@ -1,6 +1,6 @@
 name: benchmarks
 
-# External surveillance data (THL register + Finres; ECDC from the private raw bucket) -> bench.observations.
+# External surveillance data (THL register + Finres) -> bench.observations.
 # Separate from the weekly replay: this data changes at most monthly. Run it with "Run workflow"; the monthly
 # cron only runs once the repository variable BENCHMARKS_CRON_ENABLED is set to "true".
 
@@ -12,15 +12,12 @@ on:
       source:
         description: "Which source to import"
         type: choice
-        options: [all, thl_nidr, finres, ecdc]
+        options: [all, thl_nidr, finres]
         default: all
       dry_run:
         description: "Parse, validate and diff only; write nothing"
         type: boolean
         default: true
-      ecdc_storage_path:
-        description: "ecdc only: bucket/file of a registered export, e.g. benchmark-raw/ecdc_atlas_2026-10-18.csv"
-        default: ""
 
 concurrency:
   group: benchmarks
@@ -50,14 +47,9 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           SOURCE: ${{ inputs.source || 'all' }}
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '--dry-run' || '' }}
-          ECDC_PATH: ${{ inputs.ecdc_storage_path }}
         run: |
           if [ -z "$SUPABASE_DB_URL" ]; then
             echo "::error::SUPABASE_DB_URL is not set in the supabase-prod environment (see README.md)."
             exit 1
           fi
-          if [ "$SOURCE" = "ecdc" ]; then
-            python -m pipeline.benchmarks --source ecdc --storage-path "$ECDC_PATH" $DRY_RUN
-          else
-            python -m pipeline.benchmarks --source "$SOURCE" $DRY_RUN
-          fi
+          python -m pipeline.benchmarks --source "$SOURCE" $DRY_RUN
