@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: "3.12", cache: pip }
+        with: { python-version: "3.12", cache: pip, cache-dependency-path: pipeline/requirements-integration.txt }
       - run: pip install -r pipeline/requirements-integration.txt ruff
       - run: ruff check --isolated --line-length 120 --select E,F,W,I,B,UP pipeline/feeds pipeline/benchmarks tests/feeds tests/benchmarks
       - run: python -m pytest -q tests/feeds tests/benchmarks
