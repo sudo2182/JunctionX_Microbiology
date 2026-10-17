@@ -1,0 +1,13 @@
+culture_id,patient_id,age_years,sample_date,iso_year,iso_week,ward_code,ward_fi,ward_en,ward_type,institution,admission_date,specimen,specimen_fi,result,n_isolates
+C1,P1,73,2023-10-02,2023,40,PHC-S,Terveysasema Etelä,Health centre South,out,primary_care,,urine,virtsa,positive,1
+C2,P1,73,2023-10-04,2023,40,PHC-S,Terveysasema Etelä,Health centre South,out,primary_care,,urine,virtsa,positive,1
+C4,P2,43,2023-10-03,2023,40,URO,Urologia,Urology,in,hospital,2023-10-03,urine,virtsa,positive,1
+C5,P2,43,2023-10-05,2023,40,URO,Urologia,Urology,in,hospital,2023-10-03,wound,haava,positive,1
+C9,P2,43,2023-10-06,2023,40,URO,Urologia,Urology,in,hospital,2023-10-03,urine,virtsa,negative,0
+C6,P3,13,2023-10-10,2023,41,ED,Päivystys,Emergency department,out,hospital,,urine,virtsa,positive,1
+C7,P3,13,2023-10-11,2023,41,ICU,Teho-osasto,Intensive care unit,in,hospital,2023-10-10,blood,veri,positive,2
+C8,P3,13,2023-10-12,2023,41,XXX,Tuntematon,Unknown,in,hospital,2023-10-10,urine,virtsa,positive,1
+C10,P2,43,2023-10-17,2023,42,PHC-N,Terveysasema Pohjoinen,Health centre North,out,primary_care,,urine,virtsa,negative,0
+C11,P3,13,2023-10-24,2023,43,PHC-N,Terveysasema Pohjoinen,Health centre North,out,primary_care,,urine,virtsa,negative,0
+C3,P1,73,2023-10-30,2023,44,PHC-S,Terveysasema Etelä,Health centre South,out,primary_care,,urine,virtsa,positive,1
+C12,P2,43,2023-11-06,2023,45,ED,Päivystys,Emergency department,out,hospital,,urine,virtsa,negative,0
