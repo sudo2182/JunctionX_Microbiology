@@ -14,6 +14,10 @@ import { addRecords, deleteRecord, useAmr, type NewRecord } from "@/lib/amr/stor
 import { parseUpload, templateExample, templateHead } from "@/lib/amr/upload";
 
 export const Route = createFileRoute("/records")({
+  // ?q= pre-fills the ID search, so alerts can link to the exact record they came from.
+  validateSearch: (search: Record<string, unknown>): { q?: string | undefined } => ({
+    q: typeof search["q"] === "string" && search["q"].length <= 100 ? search["q"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Isolate records — AMR Watch" },
@@ -41,7 +45,8 @@ const PAGE = 50;
 
 function Records() {
   const { records } = useAmr();
-  const [q, setQ] = useState("");
+  const search = Route.useSearch();
+  const [q, setQ] = useState(search.q ?? "");
   const [org, setOrg] = useState("all");
   const [ward, setWard] = useState("all");
   const [marker, setMarker] = useState("all");

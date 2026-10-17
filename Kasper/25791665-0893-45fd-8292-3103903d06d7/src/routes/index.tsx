@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ExternalLink, Trash2 } from "lucide-react";
+import { ArrowUpRight, ExternalLink, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { DataGate, Field, Panel } from "@/components/amr/shell";
 import { SimpleSelect } from "@/components/amr/selects";
@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { addAlert, deleteAlert, useAmr, type Alert } from "@/lib/amr/store";
 import { WardAtlas } from "@/components/amr/ward-atlas";
+import { useAnnouncements, type Announcement } from "@/lib/amr/announcements";
+import { SOURCES, feedEntries, lastUpdated, sourceInfo, type FeedEntry, type Trace } from "@/lib/amr/alert-sources";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -51,54 +53,120 @@ const sevClass: Record<Alert["severity"], string> = {
   warning: "bg-destructive text-destructive-foreground",
 };
 
+const categoryBadge: Record<Announcement["category"], { text: string; cls: string }> = {
+  relevant: { text: "AMR relevant", cls: "bg-destructive text-destructive-foreground" },
+  review: { text: "needs review", cls: "bg-warning text-warning-foreground" },
+  unrelated: { text: "unrelated", cls: "bg-secondary text-secondary-foreground" },
+};
+
+const borderColor = (e: FeedEntry) =>
+  e.severity === "warning" || e.category === "relevant" ? "var(--destructive)" : e.severity === "watch" || e.category === "review" ? "var(--warning)" : undefined;
+
+function formatUtc(iso: string | null): string {
+  if (!iso) return "never";
+  const t = Date.parse(iso);
+  return Number.isFinite(t) ? new Date(t).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) + " UTC" : "unknown";
+}
+
+function TraceLink({ trace }: { trace: Trace }) {
+  if (trace.kind === "external")
+    return (
+      <a href={trace.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+        {trace.text} <ExternalLink className="h-3 w-3" />
+      </a>
+    );
+  if (trace.kind === "internal")
+    return trace.to === "/records" ? (
+      <Link to="/records" search={{ q: trace.q }} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+        {trace.text} <ArrowUpRight className="h-3 w-3" />
+      </Link>
+    ) : (
+      <Link to="/detection" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+        {trace.text} <ArrowUpRight className="h-3 w-3" />
+      </Link>
+    );
+  return <span className="text-xs text-muted-foreground">{trace.text}</span>;
+}
+
 function AlertFeed() {
-  const { alerts } = useAmr();
+  const { alerts, records } = useAmr();
+  const ecdc = useAnnouncements();
   const [filter, setFilter] = useState("all");
   const [posting, setPosting] = useState(false);
-  const shown = alerts.filter((a) => filter === "all" || a.source === filter).sort((a, b) => b.date.localeCompare(a.date));
+  const recordIds = useMemo(() => new Set(records.map((r) => r.id)), [records]);
+  const entries = useMemo(() => feedEntries(alerts, ecdc.items, recordIds), [alerts, ecdc.items, recordIds]);
+  const updated = lastUpdated(entries, ecdc.lastCheck);
+  const shown = entries.filter((e) => filter === "all" || e.source === filter);
+  const counts = new Map<string, number>();
+  for (const e of entries) counts.set(e.source, (counts.get(e.source) ?? 0) + 1);
+  // Every known source is offered (with its count, even 0); unknown values found in the data are added after them.
+  const sourceKeys = [...Object.keys(SOURCES), ...[...counts.keys()].filter((k) => !(k in SOURCES))];
+
   return (
     <Panel
       title="Alerts & news"
       right={<div className="flex items-center gap-2"><Button size="sm" variant={posting ? "secondary" : "outline"} onClick={() => setPosting(!posting)}>{posting ? "Close" : "Post alert"}</Button>{
         <SimpleSelect
-          className="h-8 w-36"
+          className="h-8 w-44"
           value={filter}
           onChange={setFilter}
           options={[
-            { value: "all", label: "All sources" },
-            { value: "news", label: "News" },
-            { value: "satscan", label: "SaTScan" },
-            { value: "internal", label: "Internal" },
+            { value: "all", label: `All sources (${entries.length})` },
+            ...sourceKeys.map((k) => ({ value: k, label: `${sourceInfo(k).label} (${counts.get(k) ?? 0})` })),
           ]}
         />}</div>
       }
     >
+      <div className="mb-2 space-y-0.5 text-xs text-muted-foreground">
+        <div>
+          Updated on <span className="num font-medium text-foreground">{formatUtc(updated)}</span>
+        </div>
+        <div>
+          ECDC feed last checked <span className="num">{ecdc.status === "loading" ? "…" : formatUtc(ecdc.lastCheck)}</span> · daily, not real time
+        </div>
+        {ecdc.status === "error" && <div className="text-destructive">ECDC items could not be loaded: {ecdc.error}</div>}
+      </div>
       {posting && <div className="mb-4 border-b pb-4"><PostAlert onDone={() => setPosting(false)} /></div>}
-      <ol className="grid max-h-[calc(100vh-210px)] gap-2 overflow-y-auto md:grid-cols-2 xl:grid-cols-1">
-        {shown.length === 0 && <li className="text-sm text-muted-foreground">No alerts yet.</li>}
-        {shown.map((a) => (
-          <li key={a.id} className="group rounded-md border-l-4 border-l-primary bg-background p-3" style={a.severity === "warning" ? { borderLeftColor: "var(--destructive)" } : a.severity === "watch" ? { borderLeftColor: "var(--warning)" } : undefined}>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="num">{a.date}</span>·<span>{a.region}</span>
-              <Badge className={`ml-auto ${sevClass[a.severity]}`}>{a.severity}</Badge>
-              <Badge variant="outline">{a.source}</Badge>
-            </div>
-            <div className="mt-1.5 text-sm font-medium leading-snug">{a.title}</div>
-            {a.organism && <div className="mt-0.5 text-xs italic text-muted-foreground">{a.organism}</div>}
-            {a.summary && <p className="mt-1 text-sm text-muted-foreground">{a.summary}</p>}
-            <div className="mt-2 flex items-center gap-3">
-              {a.url && (
-                <a href={a.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
-                  Read article <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
-               <Button variant="ghost" size="icon" className="ml-auto text-muted-foreground" onClick={() => deleteAlert(a.id).catch((e: unknown) => toast.error(e instanceof Error ? e.message : "Could not remove the alert"))} aria-label="Remove alert">
-                <Trash2 className="h-3.5 w-3.5" />
-               </Button>
-            </div>
-          </li>
-        ))}
+      <ol className="grid max-h-[calc(100vh-250px)] gap-2 overflow-y-auto md:grid-cols-2 xl:grid-cols-1">
+        {shown.length === 0 && <li className="text-sm text-muted-foreground">No alerts from this source yet.</li>}
+        {shown.map((e) => {
+          const info = sourceInfo(e.source);
+          const alertId = e.id.slice("alert:".length);
+          return (
+            <li key={e.id} className="group rounded-md border-l-4 border-l-primary bg-background p-3" style={borderColor(e) ? { borderLeftColor: borderColor(e) } : undefined}>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span className="num">{e.date || "no date"}</span>
+                {e.region && <>·<span>{e.region}</span></>}
+                {e.severity && <Badge className={`ml-auto ${sevClass[e.severity]}`}>{e.severity}</Badge>}
+                {e.category && <Badge className={`ml-auto ${categoryBadge[e.category].cls}`}>{categoryBadge[e.category].text}</Badge>}
+                <Badge variant="outline" title={info.origin}>{info.label}</Badge>
+              </div>
+              <div className="mt-1.5 text-sm font-medium leading-snug">{e.title}</div>
+              {e.organism && <div className="mt-0.5 text-xs italic text-muted-foreground">{e.organism}</div>}
+              {e.terms && e.terms.length > 0 && <div className="mt-0.5 text-xs text-muted-foreground">Matched: {e.terms.join(", ")}</div>}
+              {e.summary && <p className="mt-1 line-clamp-4 text-sm text-muted-foreground">{e.summary}</p>}
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <TraceLink trace={e.trace} />
+                <span className="text-[11px] text-muted-foreground">{e.source === "ecdc" ? "Found" : "Added"} {formatUtc(e.added)}</span>
+                {e.deletable && (
+                  <Button variant="ghost" size="icon" className="ml-auto text-muted-foreground" onClick={() => deleteAlert(alertId).catch((err: unknown) => toast.error(err instanceof Error ? err.message : "Could not remove the alert"))} aria-label="Remove alert">
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            </li>
+          );
+        })}
       </ol>
+      <details className="mt-3 text-xs text-muted-foreground">
+        <summary className="cursor-pointer">Where do these come from?</summary>
+        <dl className="mt-2 space-y-1.5">
+          {Object.values(SOURCES).map((s) => (
+            <div key={s.label}><dt className="inline font-medium text-foreground">{s.label}: </dt><dd className="inline">{s.origin}</dd></div>
+          ))}
+        </dl>
+        {ecdc.attribution && <p className="mt-2">{ecdc.attribution}</p>}
+      </details>
     </Panel>
   );
 }

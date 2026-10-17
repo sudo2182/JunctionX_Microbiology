@@ -44,6 +44,8 @@ export type Alert = {
   severity: "info" | "watch" | "warning";
   date: string;
   source: string;
+  posted?: string | undefined; // when the row was added to the feed (news_items.posted_at)
+  key?: string | undefined; // what produced it, e.g. "submission:<id>" or "pipeline:<isolate id>" for PAN flags
 };
 
 /** What the dashboard is allowed to write. */
@@ -111,7 +113,7 @@ type SubmissionRow = {
 };
 type NewsRow = {
   id: string; title: string; summary: string; url: string | null; region: string; organism: string | null;
-  severity: string; alert_date: string; source: string;
+  severity: string; alert_date: string; source: string; posted_at: string | null; detection_key: string | null;
 };
 
 const toRecord = (r: RecordRow): IsolateRecord => ({
@@ -187,6 +189,8 @@ const toAlert = (r: NewsRow): Alert => ({
   severity: (r.severity === "info" || r.severity === "warning" ? r.severity : "watch") as Alert["severity"],
   date: r.alert_date ?? "",
   source: r.source || "news",
+  posted: r.posted_at ?? undefined,
+  key: r.detection_key ?? undefined,
 });
 
 type Page = { data: unknown[] | null; error: { message: string } | null };
@@ -225,7 +229,7 @@ async function loadReference() {
 const RECORD_COLS = "id, patient_id, sex, age, sample_date, admission_date, ward, specimen, organism, markers, susceptibility, onset, setting, institution";
 const STAY_COLS = "id, patient_id, ward, institution, sample_date, admission_date, result, n_isolates";
 const SUB_COLS = "id, patient_id, sex, age_years, sample_date, admission_date, ward_code, specimen, organism, markers, susceptibility";
-const NEWS_COLS = "id, title, summary, url, region, organism, severity, alert_date, source";
+const NEWS_COLS = "id, title, summary, url, region, organism, severity, alert_date, source, posted_at, detection_key";
 
 type State = { status: "idle" | "loading" | "ready" | "error"; records: IsolateRecord[]; stays: StayRecord[]; alerts: Alert[]; error?: string };
 
@@ -350,9 +354,10 @@ export async function addAlert(a: Omit<Alert, "id">) {
       alert_date: a.date,
       source: a.source,
     })
-    .select("id");
+    .select("id, posted_at");
   if (error) throw new Error(error.message);
-  set({ alerts: [{ ...a, id: data?.[0]?.id ?? crypto.randomUUID() }, ...state.alerts] });
+  const row = data?.[0];
+  set({ alerts: [{ ...a, id: row?.id ?? crypto.randomUUID(), posted: row?.posted_at ?? new Date().toISOString() }, ...state.alerts] });
 }
 
 export async function deleteAlert(id: string) {
