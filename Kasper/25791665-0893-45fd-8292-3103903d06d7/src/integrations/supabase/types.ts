@@ -178,6 +178,53 @@ export type Database = {
       [_ in never]: never
     }
   }
+  // Read-only reference views from supabase/migrations/20261017000005_api_views.sql (repo root).
+  api: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      ref_wards: {
+        Row: {
+          institution: string | null
+          ward_code: string | null
+          ward_en: string | null
+          ward_fi: string | null
+          ward_type: string | null
+        }
+        Relationships: []
+      }
+      ref_antibiotics: {
+        Row: {
+          antibiotic: string | null
+          antibiotic_code: string | null
+          antibiotic_fi: string | null
+          class: string | null
+          reported_for: string | null
+        }
+        Relationships: []
+      }
+      ref_organisms: {
+        Row: {
+          gram: string | null
+          name: string | null
+          org_group: string | null
+          short_name: string | null
+          whonet_code: string | null
+        }
+        Relationships: []
+      }
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">

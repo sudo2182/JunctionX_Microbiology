@@ -2,7 +2,13 @@ export const START_DATE = "2023-10-02"; // Monday of ISO week 2023-40
 const DAY = 86_400_000;
 const START_MS = Date.parse(START_DATE + "T00:00:00Z");
 
-export const WARDS = [
+export type Ward = { code: string; name: string; type: string; institution: string };
+export type Antibiotic = { code: string; name: string; cls: string };
+
+// Built-in copies of ref.wards / ref.antibiotics / ref.organisms, in display order. They only cover the
+// moment before the database answers: store.ts replaces their contents with the api.ref_* rows on load
+// (setReference), and the analytics pages stay behind DataGate until then.
+export const WARDS: Ward[] = [
   { code: "ED", name: "Emergency department", type: "out", institution: "hospital" },
   { code: "MED-A", name: "Internal medicine A", type: "in", institution: "hospital" },
   { code: "MED-B", name: "Internal medicine B", type: "in", institution: "hospital" },
@@ -12,9 +18,9 @@ export const WARDS = [
   { code: "GER", name: "Geriatrics", type: "in", institution: "hospital" },
   { code: "PHC-N", name: "Health centre North", type: "out", institution: "primary_care" },
   { code: "PHC-S", name: "Health centre South", type: "out", institution: "primary_care" },
-] as const;
+];
 
-export const ANTIBIOTICS = [
+export const ANTIBIOTICS: Antibiotic[] = [
   { code: "AMP", name: "Ampicillin", cls: "Penicillins" },
   { code: "MEC", name: "Mecillinam", cls: "Penicillins (urine)" },
   { code: "TZP", name: "Piperacillin-tazobactam", cls: "Penicillins + BLI" },
@@ -28,9 +34,9 @@ export const ANTIBIOTICS = [
   { code: "NIT", name: "Nitrofurantoin", cls: "Nitrofurans (urine)" },
   { code: "VAN", name: "Vancomycin", cls: "Glycopeptides" },
   { code: "CLI", name: "Clindamycin", cls: "Lincosamides" },
-] as const;
+];
 
-export const ORGANISMS = [
+export const ORGANISMS: string[] = [
   "Escherichia coli",
   "Staphylococcus aureus",
   "Enterococcus faecalis",
@@ -41,6 +47,28 @@ export const ORGANISMS = [
   "Klebsiella oxytoca",
   "Staphylococcus saprophyticus",
 ];
+
+/** Keeps the built-in display order; codes the dashboard has not seen before go last, alphabetically. */
+function inDisplayOrder<T>(rows: T[], key: (r: T) => string, known: string[]): T[] {
+  const rank = (r: T) => {
+    const i = known.indexOf(key(r));
+    return i < 0 ? known.length : i;
+  };
+  return [...rows].sort((a, b) => rank(a) - rank(b) || key(a).localeCompare(key(b)));
+}
+
+/** Swaps the database's reference rows into the shared arrays, in place, so every importer sees them. */
+export function setReference(ref: { wards: Ward[]; antibiotics: Antibiotic[]; organisms: string[] }) {
+  if (!ref.wards.length || !ref.antibiotics.length || !ref.organisms.length) {
+    throw new Error("Reference tables (wards, antibiotics, organisms) came back empty");
+  }
+  const wards = inDisplayOrder(ref.wards, (w) => w.code, WARDS.map((w) => w.code));
+  const antibiotics = inDisplayOrder(ref.antibiotics, (a) => a.code, ANTIBIOTICS.map((a) => a.code));
+  const organisms = inDisplayOrder(ref.organisms, (o) => o, ORGANISMS);
+  WARDS.splice(0, WARDS.length, ...wards);
+  ANTIBIOTICS.splice(0, ANTIBIOTICS.length, ...antibiotics);
+  ORGANISMS.splice(0, ORGANISMS.length, ...organisms);
+}
 
 
 export const SPECIMENS = ["urine", "blood", "wound"] as const;
