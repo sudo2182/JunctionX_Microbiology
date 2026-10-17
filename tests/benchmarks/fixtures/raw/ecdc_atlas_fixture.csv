@@ -1,0 +1,14 @@
+HealthTopic,Population,Indicator,Unit,Time,RegionCode,RegionName,NumValue,TxtValue
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,"R - resistant isolates, percentage  ",%,2023,FI,Finland,7.5,
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,Total tested isolates,N,2023,FI,Finland,4000,
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,"R - resistant isolates, percentage  ",%,2023,EU31,EU/EEA (without UK),14.0,
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,Total tested isolates,N,2023,EU31,EU/EEA (without UK),150000,
+Antimicrobial resistance,Escherichia coli|Third-generation cephalosporins,"R - resistant isolates, percentage  ",%,2023,SE,Sweden,8.0,
+Antimicrobial resistance,Escherichia coli|Fluoroquinolones,"R - resistant isolates, percentage  ",%,2023,FI,Finland,11.0,
+Antimicrobial resistance,Escherichia coli|Fluoroquinolones,Total tested isolates,N,2023,FI,Finland,4000,
+Antimicrobial resistance,Staphylococcus aureus|Meticillin (MRSA),"R - resistant isolates, percentage  ",%,2023,FI,Finland,2.0,
+Antimicrobial resistance,Staphylococcus aureus|Meticillin (MRSA),Total tested isolates,N,2023,FI,Finland,2500,
+Antimicrobial resistance,Staphylococcus aureus|Meticillin (MRSA),"R - resistant isolates, percentage  ",%,2022,FI,Finland,,-
+Antimicrobial resistance,Pseudomonas aeruginosa|Piperacillin + tazobactam,"R - resistant isolates, percentage  ",%,2022,FI,Finland,6.0,
+Antimicrobial resistance,Pseudomonas aeruginosa|Piperacillin + tazobactam,Total tested isolates,N,2022,FI,Finland,500,
+Antimicrobial resistance,Escherichia coli|Fluoroquinolones,Total tested isolates,N,2022,FI,Finland,3900,

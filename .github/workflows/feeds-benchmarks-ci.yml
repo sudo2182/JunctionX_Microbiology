@@ -1,0 +1,48 @@
+name: feeds-benchmarks-ci
+
+# Lint and test pipeline/feeds and pipeline/benchmarks; render the fixture feeds and parse them.
+# Can be folded into ci.yml once that exists.
+on:
+  pull_request:
+    paths:
+      - "pipeline/feeds/**"
+      - "pipeline/benchmarks/**"
+      - "tests/feeds/**"
+      - "tests/benchmarks/**"
+      - "pipeline/requirements-integration.txt"
+      - ".github/workflows/feeds-benchmarks-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "pipeline/feeds/**"
+      - "pipeline/benchmarks/**"
+      - "tests/feeds/**"
+      - "tests/benchmarks/**"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r pipeline/requirements-integration.txt ruff
+      - run: ruff check --isolated --line-length 120 --select E,F,W,I,B,UP pipeline/feeds pipeline/benchmarks tests/feeds tests/benchmarks
+      - run: python -m pytest -q tests/feeds tests/benchmarks
+      - name: Render fixture feeds and parse with feedparser
+        run: |
+          python -m pipeline.feeds --json tests/feeds/fixtures/episodes.json --out-dir build/feeds --base-url https://amr-watch.vercel.app
+          python - <<'PY'
+          import pathlib, sys, feedparser
+          bad = [p.name for p in pathlib.Path("build/feeds").glob("*.xml") if feedparser.parse(p.read_bytes()).bozo]
+          print("bozo feeds:", bad or "none")
+          sys.exit(1 if bad else 0)
+          PY
+      - name: Validate committed benchmark exports
+        run: python -m pipeline.benchmarks
+      - uses: actions/upload-artifact@v4
+        with: { name: fixture-feeds, path: build/feeds, retention-days: 7 }

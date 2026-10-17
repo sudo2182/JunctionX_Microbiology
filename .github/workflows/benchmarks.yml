@@ -1,0 +1,43 @@
+name: benchmarks
+
+# Annual national / EU benchmark rates (ECDC Atlas, THL Finres, WHO GLASS) -> bench.rates.
+# Sources publish yearly, so this runs monthly and on demand, and only upserts new or changed rows.
+on:
+  schedule:
+    - cron: "17 5 2 * *" # 05:17 UTC on the 2nd of each month
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: "Comma-separated sources"
+        default: "ecdc,thl,glass"
+      dry_run:
+        description: "Parse, validate and diff only"
+        type: boolean
+        default: false
+
+concurrency: { group: benchmarks, cancel-in-progress: false }
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    environment: supabase-prod
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r pipeline/requirements-integration.txt
+      - name: Refresh bench.rates
+        run: >-
+          python -m pipeline.benchmarks
+          --sources "${{ inputs.sources || 'ecdc,thl,glass' }}"
+          ${{ inputs.dry_run && '--dry-run' || '' }}
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          # Optional direct export URLs (repository or environment variables). Blank = committed files only.
+          BENCH_ECDC_URL: ${{ vars.BENCH_ECDC_URL }}
+          BENCH_THL_URL: ${{ vars.BENCH_THL_URL }}
+          BENCH_GLASS_URL: ${{ vars.BENCH_GLASS_URL }}

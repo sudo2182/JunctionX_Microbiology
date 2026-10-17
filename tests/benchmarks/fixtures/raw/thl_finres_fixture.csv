@@ -1,0 +1,6 @@
+country,year,organism,antimicrobial_group,specimen_scope,n_tested,pct_r,source_url
+Finland,2023,Escherichia coli,fluoroquinolones,urine,50000,8.0,
+Finland,2023,Escherichia coli,trimethoprim,urine,50000,17.0,
+Finland,2023,Escherichia coli,nitrofurantoin,urine,50000,0.5,
+Finland,2023,Escherichia coli,mecillinam,urine,50000,3.0,
+Finland,2023,Staphylococcus aureus,MRSA,all,20000,3.0,https://example.org/finres

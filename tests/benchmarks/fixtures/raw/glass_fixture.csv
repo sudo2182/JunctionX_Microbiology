@@ -1,0 +1,4 @@
+Iso3,Year,PathogenName,AbTargets,Specimen,InterpretableAST,Resistant
+FIN,2022,Escherichia coli,Third-generation cephalosporins,BLOOD,3800,266
+SWE,2022,Escherichia coli,Third-generation cephalosporins,BLOOD,9000,720
+FIN,2022,Escherichia coli,Fluoroquinolones,URINE,40000,3200

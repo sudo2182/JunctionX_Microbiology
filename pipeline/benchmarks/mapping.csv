@@ -1,0 +1,23 @@
+organism,antibiotic_code,specimen,antimicrobial_group,specimen_scope
+Escherichia coli,CRO,blood,third_generation_cephalosporins,invasive
+Escherichia coli,CIP,blood,fluoroquinolones,invasive
+Escherichia coli,AMP,blood,aminopenicillins,invasive
+Escherichia coli,MEM,blood,carbapenems,invasive
+Escherichia coli,CRO,urine,third_generation_cephalosporins,urine
+Escherichia coli,CIP,urine,fluoroquinolones,urine
+Escherichia coli,AMP,urine,aminopenicillins,urine
+Escherichia coli,MEC,urine,mecillinam,urine
+Escherichia coli,TMP,urine,trimethoprim,urine
+Escherichia coli,NIT,urine,nitrofurantoin,urine
+Klebsiella pneumoniae,CRO,blood,third_generation_cephalosporins,invasive
+Klebsiella pneumoniae,CIP,blood,fluoroquinolones,invasive
+Klebsiella pneumoniae,MEM,blood,carbapenems,invasive
+Klebsiella pneumoniae,CRO,urine,third_generation_cephalosporins,urine
+Klebsiella pneumoniae,CIP,urine,fluoroquinolones,urine
+Pseudomonas aeruginosa,TZP,blood,piperacillin_tazobactam,invasive
+Pseudomonas aeruginosa,CAZ,blood,ceftazidime,invasive
+Pseudomonas aeruginosa,CIP,blood,fluoroquinolones,invasive
+Pseudomonas aeruginosa,MEM,blood,carbapenems,invasive
+Staphylococcus aureus,FOX,blood,mrsa,invasive
+Staphylococcus aureus,MRSA,blood,mrsa,invasive
+Staphylococcus aureus,MRSA,all,mrsa,all
