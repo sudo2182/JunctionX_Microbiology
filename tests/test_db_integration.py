@@ -91,3 +91,18 @@ def test_anon_reads_api_only(conn):
         with pytest.raises(psycopg.errors.InsufficientPrivilege):
             cur.execute("select * from lab.cultures limit 1")
     conn.rollback()
+
+
+def test_migrations_can_be_reapplied_without_touching_data(conn):
+    """migrate.yml re-applies every file when the schema was created outside this repo."""
+    execute(conn, advance=1, reset_to=4, do_seed=True, run_id="t1")
+    before = (_count(conn, "select count(*) from lab.cultures"), _count(conn, "select count(*) from agg.rates"),
+              _count(conn, "select count(*) from ref.wards"))
+    conn.commit()
+    with psycopg.connect(URL, autocommit=True) as admin:
+        for f in sorted((ROOT / "supabase" / "migrations").glob("*.sql")):
+            admin.execute(f.read_text())
+    after = (_count(conn, "select count(*) from lab.cultures"), _count(conn, "select count(*) from agg.rates"),
+             _count(conn, "select count(*) from ref.wards"))
+    assert after == before
+    assert replay.get_cursor(conn) == 4

@@ -21,6 +21,7 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
       SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF || 'jofgoferdnkihimvencr' }}
     steps:
       - uses: actions/checkout@v4
@@ -33,9 +34,25 @@ jobs:
             if [ -z "${!v}" ]; then echo "::error::$v is not set in the supabase-prod environment"; exit 1; fi
           done
       - run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
-      - run: supabase db push
+      # Migrations applied outside this repo (e.g. through the Supabase dashboard or connector) are
+      # recorded under versions that do not match our files, which makes `db push` refuse to run.
+      # Every migration here is safe to re-apply, so mark those foreign versions as reverted and let
+      # `db push --include-all` apply our files on top of what is already there.
+      - name: Reconcile migration history
+        run: |
+          local_versions=$(ls supabase/migrations/*.sql | xargs -n1 basename | cut -d_ -f1 | paste -sd, -)
+          remote_only=$(psql "$SUPABASE_DB_URL" -Atc \
+            "select version from supabase_migrations.schema_migrations
+             where version <> all (string_to_array('$local_versions', ','))" 2>/dev/null || true)
+          if [ -n "$remote_only" ]; then
+            echo "Versions applied outside this repo, marked reverted: $(echo $remote_only)"
+            supabase migration repair --status reverted $remote_only
+          else
+            echo "Migration history matches this repo."
+          fi
+      - run: supabase db push --include-all
       - name: Next steps
         run: |
-          msg="Migrations applied. Next: in Supabase, Project Settings -> API -> Exposed schemas, add 'api' (only api). Then run the replay workflow with seed ticked and reset_to = 85."
+          msg="Migrations applied. Next: in Supabase, Project Settings -> API -> Exposed schemas, add 'api' (only api). Then run the replay workflow with reset_to = 85 (tick seed only if staging is empty)."
           echo "::notice title=Expose the api schema::$msg"
-          { echo "### Migrations applied"; echo; echo "1. Supabase -> Project Settings -> API -> Exposed schemas: add \`api\` (keep the other new schemas private)."; echo "2. Actions -> replay -> Run workflow with **seed** ticked and **reset_to = 85**."; } >> "$GITHUB_STEP_SUMMARY"
+          { echo "### Migrations applied"; echo; echo "1. Supabase -> Project Settings -> API -> Exposed schemas: add \`api\` (keep the other new schemas private)."; echo "2. Actions -> replay -> Run workflow with **reset_to = 85** (tick **seed** only if staging is empty)."; } >> "$GITHUB_STEP_SUMMARY"

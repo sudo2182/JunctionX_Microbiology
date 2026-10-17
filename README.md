@@ -41,7 +41,9 @@ Contracts between the builds:
 | `agg.rates` | One row per `(end_week_idx, window_weeks, organism, antibiotic_code, specimen, scope_type, scope_value)`. `antibiotic_code` is a WHONET code or a phenotype marker `ESBL`/`MRSA`/`VRE`/`CPE`. `specimen = 'all'` and `window_weeks = 1` exist at hospital scope only. `reportable` = `n_tested >= 30`. Intrinsic and non-reportable AST rows never count. |
 
 Change the schema with a **new** migration file (`supabase/migrations/<timestamp>_<name>.sql`); never
-edit one that has been applied.
+edit one that has been applied. Keep every migration safe to re-apply (`if not exists`, `on conflict do
+nothing`, drop-and-recreate for views): `migrate.yml` re-applies them when the schema was created outside
+this repo, e.g. through the Supabase dashboard.
 
 ## Cleaning rules (BUILD_PLAN.md §3.2)
 
@@ -125,7 +127,9 @@ Do these in order. The `api` schema only exists after step 2, and GitHub only le
    `supabase link --project-ref jofgoferdnkihimvencr && supabase db push`.
 3. **Expose only `api`.** Project Settings -> API -> Exposed schemas: add `api` (keep `public`,
    `graphql_public`). Do not expose `staging`, `lab`, `ref`, `bench` or `agg`.
-4. **First load**: Actions -> replay -> Run workflow with `seed` ticked and `reset_to = 85`.
+4. **First load**: Actions -> replay -> Run workflow with `reset_to = 85`. Tick `seed` only if
+   `staging.*` is empty; re-seeding truncates and reloads the same CSVs, so it is safe but not needed
+   once the data is in.
 5. **Demo**: Run workflow with `advance = 1` (or 5). Rehearse from `reset_to = 85`.
 
 The service role key never goes to Vercel or the browser; the dashboard uses the anon key, which

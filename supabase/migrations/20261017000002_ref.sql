@@ -1,6 +1,6 @@
 -- AMR Watch: reference data (BUILD_PLAN.md §3.2 R1, R2, R6 and §4).
 
-create table ref.wards (
+create table if not exists ref.wards (
   ward_code   text primary key,
   ward_fi     text not null,
   ward_en     text not null,
@@ -8,7 +8,7 @@ create table ref.wards (
   institution text not null check (institution in ('hospital', 'primary_care'))
 );
 
-create table ref.antibiotics (
+create table if not exists ref.antibiotics (
   antibiotic_code text primary key,          -- WHONET code
   antibiotic      text not null,
   antibiotic_fi   text not null,
@@ -16,7 +16,7 @@ create table ref.antibiotics (
   reported_for    text not null check (reported_for in ('all', 'urine'))
 );
 
-create table ref.organisms (
+create table if not exists ref.organisms (
   name        text primary key,               -- Latin name as in the LIS export
   short_name  text not null,
   whonet_code text not null,
@@ -26,7 +26,7 @@ create table ref.organisms (
 
 -- EUCAST Expected Resistant Phenotypes v1.2. Matching AST rows are kept but flagged
 -- is_intrinsic = true and excluded from every rate; the heatmap shows them as "IR".
-create table ref.intrinsic_resistance (
+create table if not exists ref.intrinsic_resistance (
   organism        text references ref.organisms (name),
   antibiotic_code text references ref.antibiotics (antibiotic_code),
   source          text not null,
@@ -34,14 +34,14 @@ create table ref.intrinsic_resistance (
 );
 
 -- Which organisms a phenotype marker is reported for (agg.rates.antibiotic_code = marker).
-create table ref.phenotypes (
+create table if not exists ref.phenotypes (
   marker   text not null check (marker in ('ESBL', 'MRSA', 'VRE', 'CPE')),
   organism text not null references ref.organisms (name),
   primary key (marker, organism)
 );
 
 -- Anomaly engine thresholds, frozen here after tuning (BUILD_PLAN.md §7). Owned by detect.py.
-create table ref.alert_rules (
+create table if not exists ref.alert_rules (
   rule_key    text primary key,
   value       numeric not null,
   description text not null
@@ -49,7 +49,7 @@ create table ref.alert_rules (
 
 -- Our organism + WHONET code + specimen -> benchmark antimicrobial group (BUILD_PLAN.md §3.3).
 -- Mirrors pipeline/benchmarks/mapping.csv; antimicrobial_group uses its canonical snake_case names.
-create table ref.benchmark_mapping (
+create table if not exists ref.benchmark_mapping (
   organism            text references ref.organisms (name),
   antibiotic_code     text not null,          -- WHONET code or phenotype marker
   specimen            text not null,          -- our specimen: 'urine' | 'blood' | 'wound' | 'all'
@@ -67,7 +67,8 @@ insert into ref.wards (ward_code, ward_fi, ward_en, ward_type, institution) valu
   ('ICU',   'Teho-osasto',            'Intensive care unit',  'in',  'hospital'),
   ('GER',   'Geriatria',              'Geriatrics',           'in',  'hospital'),
   ('PHC-N', 'Terveysasema Pohjoinen', 'Health centre North',  'out', 'primary_care'),
-  ('PHC-S', 'Terveysasema Etelä',     'Health centre South',  'out', 'primary_care');
+  ('PHC-S', 'Terveysasema Etelä',     'Health centre South',  'out', 'primary_care')
+on conflict do nothing;
 
 insert into ref.antibiotics (antibiotic_code, antibiotic, antibiotic_fi, class, reported_for) values
   ('AMP', 'ampicillin',              'ampisilliini',                 'penicillins',            'all'),
@@ -82,7 +83,8 @@ insert into ref.antibiotics (antibiotic_code, antibiotic, antibiotic_fi, class, 
   ('TMP', 'trimethoprim',            'trimetopriimi',                'trimethoprim',           'urine'),
   ('NIT', 'nitrofurantoin',          'nitrofurantoiini',             'nitrofurans',            'urine'),
   ('VAN', 'vancomycin',              'vankomysiini',                 'glycopeptides',          'all'),
-  ('CLI', 'clindamycin',             'klindamysiini',                'lincosamides',           'all');
+  ('CLI', 'clindamycin',             'klindamysiini',                'lincosamides',           'all')
+on conflict do nothing;
 
 insert into ref.organisms (name, short_name, whonet_code, gram, org_group) values
   ('Escherichia coli',             'E. coli',            'eco', 'negative', 'Enterobacterales'),
@@ -93,20 +95,23 @@ insert into ref.organisms (name, short_name, whonet_code, gram, org_group) value
   ('Pseudomonas aeruginosa',       'P. aeruginosa',      'pae', 'negative', 'Non-fermenters'),
   ('Staphylococcus aureus',        'S. aureus',          'sau', 'positive', 'Staphylococci'),
   ('Staphylococcus saprophyticus', 'S. saprophyticus',   'ssa', 'positive', 'Staphylococci'),
-  ('Enterococcus faecalis',        'E. faecalis',        'efa', 'positive', 'Enterococci');
+  ('Enterococcus faecalis',        'E. faecalis',        'efa', 'positive', 'Enterococci')
+on conflict do nothing;
 
 insert into ref.intrinsic_resistance (organism, antibiotic_code, source) values
   ('Klebsiella pneumoniae', 'AMP', 'EUCAST Expected Resistant Phenotypes v1.2'),
   ('Klebsiella oxytoca',    'AMP', 'EUCAST Expected Resistant Phenotypes v1.2'),
   ('Citrobacter freundii',  'AMP', 'EUCAST Expected Resistant Phenotypes v1.2'),
-  ('Proteus mirabilis',     'NIT', 'EUCAST Expected Resistant Phenotypes v1.2');
+  ('Proteus mirabilis',     'NIT', 'EUCAST Expected Resistant Phenotypes v1.2')
+on conflict do nothing;
 
 insert into ref.phenotypes (marker, organism) values
   ('ESBL', 'Escherichia coli'), ('ESBL', 'Klebsiella pneumoniae'),
   ('MRSA', 'Staphylococcus aureus'),
   ('VRE',  'Enterococcus faecalis'),
   ('CPE',  'Escherichia coli'), ('CPE', 'Klebsiella pneumoniae'), ('CPE', 'Klebsiella oxytoca'),
-  ('CPE',  'Proteus mirabilis'), ('CPE', 'Citrobacter freundii');
+  ('CPE',  'Proteus mirabilis'), ('CPE', 'Citrobacter freundii')
+on conflict do nothing;
 
 insert into ref.alert_rules (rule_key, value, description) values
   ('min_n',                30,    'Minimum first isolates in both windows before a rate test runs'),
@@ -117,7 +122,8 @@ insert into ref.alert_rules (rule_key, value, description) values
   ('rate_min_ratio',       1.5,   'Minimum relative increase (alternative to min_abs_pp)'),
   ('count_p_max',          0.01,  'Poisson upper-tail p threshold for count signals'),
   ('count_min_k',          3,     'Minimum count for a count signal'),
-  ('resolve_after_weeks',  2,     'Episode resolves after this many consecutive quiet weeks');
+  ('resolve_after_weeks',  2,     'Episode resolves after this many consecutive quiet weeks')
+on conflict do nothing;
 
 insert into ref.benchmark_mapping (organism, antibiotic_code, specimen, antimicrobial_group, specimen_scope) values
   ('Escherichia coli', 'CRO', 'blood', 'third_generation_cephalosporins', 'invasive'),
@@ -141,4 +147,5 @@ insert into ref.benchmark_mapping (organism, antibiotic_code, specimen, antimicr
   ('Pseudomonas aeruginosa', 'MEM', 'blood', 'carbapenems', 'invasive'),
   ('Staphylococcus aureus', 'FOX', 'blood', 'mrsa', 'invasive'),
   ('Staphylococcus aureus', 'MRSA', 'blood', 'mrsa', 'invasive'),
-  ('Staphylococcus aureus', 'MRSA', 'all', 'mrsa', 'all');
+  ('Staphylococcus aureus', 'MRSA', 'all', 'mrsa', 'all')
+on conflict do nothing;

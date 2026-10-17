@@ -2,6 +2,16 @@
 -- Views are owned by the migration role, so they can read agg/bench/ref without exposing them.
 -- No view returns a patient_id, birth year or exact sample date: the smallest time unit is the ISO week.
 
+-- Views are derived, so they are dropped and recreated: this file can be re-applied safely
+-- (including over the first version, whose picker views had no ref_ prefix).
+drop view if exists
+  api.replay_status, api.rate_series, api.current_vs_baseline, api.antibiogram, api.heatmap,
+  api.intrinsic_resistance, api.ref_intrinsic_resistance, api.ward_comparison, api.benchmarks,
+  api.alerts, api.alert_detail, api.data_quality, api.pipeline_runs,
+  api.organisms, api.antibiotics, api.wards, api.phenotypes,
+  api.ref_organisms, api.ref_antibiotics, api.ref_wards, api.ref_phenotypes, api.ref_weeks
+  cascade;
+
 -- Data-through banner.
 create view api.replay_status as
 select

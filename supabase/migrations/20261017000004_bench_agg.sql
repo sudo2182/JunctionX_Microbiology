@@ -1,6 +1,6 @@
 -- AMR Watch: benchmark and aggregate tables (BUILD_PLAN.md §4.1, §4.2, §7.6, §8.4).
 
-create table bench.rates (
+create table if not exists bench.rates (
   source              text not null,          -- 'ECDC' | 'THL' | 'WHO GLASS'
   country             text not null,
   year                int not null,
@@ -18,7 +18,7 @@ create table bench.rates (
 
 -- Window rates materialised by pipeline/aggregate.py. First-isolate de-duplication is applied
 -- within each window (and within each scope), so these cannot be a live SQL view.
-create table agg.rates (
+create table if not exists agg.rates (
   end_week_idx    int not null,
   window_weeks    int not null check (window_weeks in (1, 4, 8, 13, 52)),
   organism        text not null,
@@ -34,13 +34,13 @@ create table agg.rates (
   reportable      bool not null,               -- n_tested >= 30
   primary key (end_week_idx, window_weeks, organism, antibiotic_code, specimen, scope_type, scope_value)
 );
-create index on agg.rates (organism, antibiotic_code, specimen, scope_type, scope_value, window_weeks, end_week_idx);
+create index if not exists rates_organism_antibiotic_code_specimen_scope_type_scope_va_idx on agg.rates (organism, antibiotic_code, specimen, scope_type, scope_value, window_weeks, end_week_idx);
 
 -- Optional exploration splits (sex, age_band), 52-week window only. Same shape as agg.rates.
-create table agg.rates_demo (like agg.rates including all);
+create table if not exists agg.rates_demo (like agg.rates including all);
 
 -- Alert episodes and firings (BUILD_PLAN.md §7.6). Written by pipeline/detect.py.
-create table agg.alert_episodes (
+create table if not exists agg.alert_episodes (
   episode_id      text primary key,
   key             text not null unique,        -- signal|organism|marker_or_antibiotic|specimen|scope_type|scope_value
   signal_type     text not null check (signal_type in ('rate', 'count', 'sentinel', 'drift')),
@@ -62,7 +62,7 @@ create table agg.alert_episodes (
   updated_at      timestamptz not null default now()
 );
 
-create table agg.alert_firings (
+create table if not exists agg.alert_firings (
   episode_id text not null references agg.alert_episodes (episode_id) on delete cascade,
   week_idx   int not null,
   evidence   jsonb not null,                   -- see BUILD_PLAN.md §7.4
@@ -71,7 +71,7 @@ create table agg.alert_firings (
 );
 
 -- What each RSS feed has published, so items are never duplicated or silently changed (§8.4).
-create table agg.feed_log (
+create table if not exists agg.feed_log (
   item_guid    text not null,
   feed         text not null,
   episode_id   text references agg.alert_episodes (episode_id) on delete set null,
