@@ -14,14 +14,19 @@ ast:      isolate_id, antibiotic_code, result, is_intrinsic, reportable
 
 from __future__ import annotations
 
+import logging
+
 import pandas as pd
 
 from pipeline.reference import Reference
 from pipeline.stats import wilson
 
+log = logging.getLogger(__name__)
+
 WINDOWS = (1, 4, 8, 13, 52)
 MIN_N = 30
 MAX_WINDOW = max(WINDOWS)
+WRITE_BATCH_WEEKS = 10
 
 # scope_type -> isolate column holding scope_value (None = hospital-wide, scope_value 'ALL')
 SCOPES = {"hospital": None, "ward": "ward_code", "setting": "setting", "onset": "onset"}
@@ -137,17 +142,24 @@ def run(conn, weeks: list[int], run_id: str, ref: Reference | None = None) -> di
     if not weeks:
         return {"weeks": 0, "rows": 0}
     isolates, ast = db.load_lab_frames(conn, min(weeks) - MAX_WINDOW + 1, max(weeks))
-    frames, dq = [], []
-    for w in weeks:
-        frames.append(compute_rates(isolates, ast, w, ref=ref))
-        s = dedup_summary(isolates, w)
-        dq.append({"run_id": run_id, "week_idx": w, "check_name": "first_isolate_removed_4w",
-                   "value": s["removed"], "status": "info",
-                   "detail": f"{s['first_isolates']} first isolates of {s['isolates']} in the 4-week window"})
-    rates = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=RATE_COLUMNS)
-    with conn.cursor() as cur:
-        cur.execute("delete from agg.rates where end_week_idx = any(%s)", (list(weeks),))
-    db.upsert_df(conn, "agg.rates", rates, RATE_COLUMNS)
-    db.write_dq(conn, pd.DataFrame(dq))
-    conn.commit()
-    return {"weeks": len(weeks), "rows": len(rates)}
+    total = 0
+    # Written in batches: a 130-week backfill is ~1M rows, and one statement that big runs past Supabase's
+    # 2-minute statement timeout. Each batch deletes and re-inserts its own weeks, so a retry is safe.
+    for i in range(0, len(weeks), WRITE_BATCH_WEEKS):
+        batch = weeks[i : i + WRITE_BATCH_WEEKS]
+        frames, dq = [], []
+        for w in batch:
+            frames.append(compute_rates(isolates, ast, w, ref=ref))
+            s = dedup_summary(isolates, w)
+            dq.append({"run_id": run_id, "week_idx": w, "check_name": "first_isolate_removed_4w",
+                       "value": s["removed"], "status": "info",
+                       "detail": f"{s['first_isolates']} first isolates of {s['isolates']} in the 4-week window"})
+        rates = pd.concat(frames, ignore_index=True)
+        with conn.cursor() as cur:
+            cur.execute("delete from agg.rates where end_week_idx = any(%s)", (list(batch),))
+        db.upsert_df(conn, "agg.rates", rates, RATE_COLUMNS)
+        db.write_dq(conn, pd.DataFrame(dq))
+        conn.commit()
+        total += len(rates)
+        log.info("aggregate: weeks %d..%d written (%d rows so far)", batch[0], batch[-1], total)
+    return {"weeks": len(weeks), "rows": total}
