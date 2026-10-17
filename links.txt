@@ -1,0 +1,4 @@
+Websites with data:
+WHO: https://worldhealthorg.shinyapps.io/glass-dashboard/_w_907d10c2f99e4c77a7bdc12f92d7e012/#!/home
+European visualisation tool: https://www.ecdc.europa.eu/en/about-us/networks/disease-networks-and-laboratory-networks/ears-net-data
+Finnish National Infectious Disease Register: https://sampo.thl.fi/pivot/prod/en/ttr
