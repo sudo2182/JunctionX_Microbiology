@@ -1,6 +1,6 @@
 """Run the anomaly engine over the synthetic CSVs.
 
-    python -m pipeline.anomaly --data TYKS_data --from 56 --to 156 --out alerts.json
+    python -m pipeline.anomaly --data ../data/tyks --from 56 --to 156 --out alerts.json
 
 Prints a per-week summary and writes the episodes with their firings as JSON, in the
 shape ``python -m pipeline.feeds --json`` reads. The database job

@@ -1,18 +1,18 @@
 name: anomaly-ci
 
-# Lint and test pipeline/anomaly, including the planted-outbreak ground-truth test
-# (runs on the synthetic export in TYKS_data/). Can be folded into ci.yml once that exists.
+# Lint and test backend/pipeline/anomaly, including the planted-outbreak ground-truth test
+# (runs on the synthetic export in data/tyks/). Can be folded into ci.yml once that exists.
 on:
   pull_request:
     paths:
-      - "pipeline/anomaly/**"
-      - "tests/anomaly/**"
+      - "backend/pipeline/anomaly/**"
+      - "backend/tests/anomaly/**"
       - ".github/workflows/anomaly-ci.yml"
   push:
     branches: [main]
     paths:
-      - "pipeline/anomaly/**"
-      - "tests/anomaly/**"
+      - "backend/pipeline/anomaly/**"
+      - "backend/tests/anomaly/**"
 
 permissions:
   contents: read
@@ -21,10 +21,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend  # Python project root (pipeline/, tests/, supabase/)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: "3.12", cache: pip, cache-dependency-path: pipeline/anomaly/requirements.txt }
+        with: { python-version: "3.12", cache: pip, cache-dependency-path: backend/pipeline/anomaly/requirements.txt }
       - run: pip install -r pipeline/anomaly/requirements.txt ruff
       - run: ruff check --isolated --line-length 120 --select E,F,W,I,B,UP pipeline/anomaly tests/anomaly
       - run: python -m pytest -q tests/anomaly

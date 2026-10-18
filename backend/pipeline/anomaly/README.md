@@ -4,7 +4,7 @@ Implements BUILD_PLAN section 7. Pure Python + pandas (no scipy); every statisti
 `stats.py` and unit-tested.
 
 ```
-python -m pipeline.anomaly --data TYKS_data --from 85 --to 132 --out build/episodes.json
+python -m pipeline.anomaly --data ../data/tyks --from 85 --to 132 --out build/episodes.json
 python -m pipeline.feeds --json build/episodes.json --out-dir build/feeds   # RSS, from the feeds branch
 python -m pytest -q tests/anomaly                                           # ~20 s incl. ground truth
 AMR_SLOW=1 python -m pytest -q tests/anomaly                                # + full replay false-alarm check (~2 min)

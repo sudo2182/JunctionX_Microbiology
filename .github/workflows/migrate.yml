@@ -1,11 +1,11 @@
 name: migrate
 
-# Applies supabase/migrations/ to the Supabase project with the Supabase CLI, connecting with
+# Applies backend/supabase/migrations/ to the Supabase project with the Supabase CLI, connecting with
 # SUPABASE_DB_URL directly (no `supabase link`, so no personal access token is needed).
 on:
   push:
     branches: [main]
-    paths: ["supabase/migrations/**"]
+    paths: ["backend/supabase/migrations/**"]
   workflow_dispatch:
 
 concurrency:
@@ -21,6 +21,9 @@ jobs:
     environment: supabase-prod
     env:
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+    defaults:
+      run:
+        working-directory: backend  # Python project root (pipeline/, tests/, supabase/)
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1

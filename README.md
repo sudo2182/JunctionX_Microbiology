@@ -1,35 +1,48 @@
 # AMR Watch
 
 A continuously updated, laboratory-based antimicrobial resistance surveillance tool
-(JunctionX Turku, Tyks x Mylab case). The full design is in [`BUILD_PLAN.md`](BUILD_PLAN.md);
+(JunctionX Turku, Tyks x Mylab case). The full design is in [`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md);
 this README covers how the repo is laid out and how to run it.
 
-The lab data is the synthetic Finnish hospital export in `TYKS_data/` (156 ISO weeks,
+The lab data is the synthetic Finnish hospital export in `data/tyks/` (156 ISO weeks,
 2023-W40 to 2026-W39). A weekly **replay** releases it one week at a time so every view behaves
 as if results were arriving live.
 
 ## Layout and module boundaries
 
 ```
-supabase/migrations/   SQL: schemas, tables, api views, RLS, grants           (foundation)
-supabase/local_roles.sql  anon/authenticated/service_role stand-ins for vanilla Postgres (tests only)
-pipeline/              Python package, run as `python -m pipeline.<module>`
-  weeks.py             week_idx <-> ISO week (1 = 2023-W40, 156 = 2026-W39)   (foundation)
-  reference.py         default reference sets, mirrored from ref.* seed rows  (foundation)
-  clean.py             rules R1-R8, pure pandas                               (foundation)
-  stats.py             wilson(), exact binomial / Poisson tails, BH           (foundation)
-  aggregate.py         first-isolate window rates + Wilson CI -> agg.rates    (foundation)
-  seed.py              CSVs -> staging.*                                      (foundation)
-  replay.py            staging -> lab, one ISO week at a time, cursor         (foundation)
-  run.py               orchestrates one run: advance -> aggregate -> detect -> feed -> log
-  db.py                psycopg helpers (COPY, upsert, load frames)
-  detect.py            anomaly engine -> agg.alert_episodes / alert_firings   (anomaly-engine build)
-  feeds/               RSS feeds -> Storage bucket `feeds`, agg.feed_log      (RSS build)
-  announcements/       ECDC RSS monitor -> bench.announcements, api.announcements
-  benchmarks/          THL external data -> bench.observations         (data-importer build)
-tests/                 pytest; data/fixtures/ holds tiny hand-built CSVs
-web/                   Next.js dashboard, reads api.* only                    (dashboard build)
-.github/workflows/     ci.yml, replay.yml, migrate.yml
+frontend/              the dashboard app (TanStack Start + Supabase), deployed on Vercel; see frontend/README.md
+  .env                 app keys (git-ignored; names in the root .env.example)
+backend/               everything Python + the database; run Python commands from here
+  supabase/migrations/   SQL: schemas, tables, api views, RLS, grants           (foundation)
+  supabase/local_roles.sql  anon/authenticated/service_role stand-ins for vanilla Postgres (tests only)
+  supabase/proposals/    SQL drafts that were NOT applied
+  supabase/lovable/      the teammate's Lovable migrations, kept as a record (already live; not applied by CI)
+  pipeline/              Python package, run as `python -m pipeline.<module>`
+    weeks.py             week_idx <-> ISO week (1 = 2023-W40, 156 = 2026-W39)   (foundation)
+    reference.py         default reference sets, mirrored from ref.* seed rows  (foundation)
+    clean.py             rules R1-R8, pure pandas                               (foundation)
+    stats.py             wilson(), exact binomial / Poisson tails, BH           (foundation)
+    aggregate.py         first-isolate window rates + Wilson CI -> agg.rates    (foundation)
+    seed.py              CSVs -> staging.*                                      (foundation)
+    replay.py            staging -> lab, one ISO week at a time, cursor         (foundation)
+    run.py               orchestrates one run: advance -> aggregate -> detect -> feed -> log
+    db.py                psycopg helpers (COPY, upsert, load frames)
+    detect.py            anomaly engine -> agg.alert_episodes / alert_firings   (anomaly-engine build)
+    anomaly/             standalone anomaly engine (python -m pipeline.anomaly)
+    feeds/               RSS feeds -> Storage bucket `feeds`, agg.feed_log      (RSS build)
+    announcements/       ECDC RSS monitor -> bench.announcements, api.announcements
+    benchmarks/          THL external data -> bench.observations         (data-importer build)
+  tests/                 pytest
+  pyproject.toml, requirements-dev.txt
+data/
+  tyks/                  the synthetic TYKS export (CSVs)
+  fixtures/              tiny hand-built CSVs for tests
+  raw/                   optional local copy of the dataset (git-ignored)
+docs/                  BUILD_PLAN.md, external-data-mapping.md, links.txt
+archive/               not deployed: the earlier Next.js dashboard, the web/ placeholder, the original Lovable export
+.github/workflows/     CI and scheduled jobs (Python jobs run with working-directory: backend)
+.env.example           every environment variable, grouped by folder
 ```
 
 Contracts between the builds:
@@ -42,7 +55,7 @@ Contracts between the builds:
 | external data | `bench.observations` holds THL figures with provenance. It is never joined to `lab.*` or `agg.*`; `ref.benchmark_comparability` is the only link, and the dashboard reads `api.benchmarks`, `api.benchmarks_by_sex`, `api.external_context` and `api.external_sources`. See "External benchmarks" below. |
 | `agg.rates` | One row per `(end_week_idx, window_weeks, organism, antibiotic_code, specimen, scope_type, scope_value)`. `antibiotic_code` is a WHONET code or a phenotype marker `ESBL`/`MRSA`/`VRE`/`CPE`. `specimen = 'all'` and `window_weeks = 1` exist at hospital scope only. `reportable` = `n_tested >= 30`. Intrinsic and non-reportable AST rows never count. |
 
-Change the schema with a **new** migration file (`supabase/migrations/<timestamp>_<name>.sql`); never
+Change the schema with a **new** migration file (`backend/supabase/migrations/<timestamp>_<name>.sql`); never
 edit one that has been applied. Keep every migration safe to re-apply (`if not exists`, `on conflict do
 nothing`, drop-and-recreate for views): `migrate.yml` re-applies them when the schema was created outside
 this repo, e.g. through the Supabase dashboard.
@@ -67,7 +80,7 @@ three 52-week windows is n = 7,657 with ciprofloxacin 8.4% R and trimethoprim 18
 
 ## Run locally
 
-Needs Python 3.11+ and, for the database steps, Postgres 15+ (a local server or the Supabase
+All Python commands below run from `backend/` (`cd backend` first). Needs Python 3.11+ and, for the database steps, Postgres 15+ (a local server or the Supabase
 project).
 
 ```bash
@@ -100,10 +113,10 @@ each further week adds about 7,700 rows.
 
 ### The dataset
 
-The CSVs are read from `AMR_DATA_DIR` if set, else `data/raw/` (git-ignored), else `TYKS_data/`
-(already committed to this repo). Nothing else needs a copy of the full dataset; tests use the tiny
-fixtures in `data/fixtures/` plus `TYKS_data/` for the regression test (skipped if absent). For the
-hosted replay, `seed` runs inside the Action from the checked-out `TYKS_data/`, so no Storage upload
+The CSVs are read from `AMR_DATA_DIR` if set, else `data/raw/` (git-ignored), else `data/tyks/`
+(already committed to this repo; paths are from the repository root). Nothing else needs a copy of the full dataset; tests use the tiny
+fixtures in `data/fixtures/` plus `data/tyks/` for the regression test (skipped if absent). For the
+hosted replay, `seed` runs inside the Action from the checked-out `data/tyks/`, so no Storage upload
 is needed.
 
 ## Supabase setup (project `jofgoferdnkihimvencr`)
@@ -210,4 +223,4 @@ ECDC content is CC BY 4.0 unless stated otherwise: show `attribution` from `api.
 | `replay.yml` | `workflow_dispatch` (+ hourly cron when enabled) | `python -m pipeline.run --advance N [--reset-to K] [--seed]` |
 | `benchmarks.yml` | `workflow_dispatch` (+ monthly cron when `BENCHMARKS_CRON_ENABLED=true`) | `python -m pipeline.benchmarks --source <all\|thl_nidr\|finres> [--dry-run]` into `bench.observations` |
 | `ecdc_announcements.yml` | `workflow_dispatch` (+ daily cron when `ANNOUNCEMENTS_CRON_ENABLED=true`) | `python -m pipeline.announcements --db [--dry-run] [--only-relevant]` into `bench.announcements` |
-| `migrate.yml` | push to `main` touching `supabase/migrations/**`, or manual | `supabase db push --db-url $SUPABASE_DB_URL` (no access token needed) |
+| `migrate.yml` | push to `main` touching `backend/supabase/migrations/**`, or manual | `supabase db push --db-url $SUPABASE_DB_URL` (no access token needed) |

@@ -16,10 +16,10 @@ __pycache__/
 *.egg-info/
 
 # Supabase CLI local state
-supabase/.temp/
-supabase/.branches/
+backend/supabase/.temp/
+backend/supabase/.branches/
 
-# Node (web/)
+# Node (frontend/, archive/dashboard-nextjs/)
 node_modules/
 .next/
 .vercel/

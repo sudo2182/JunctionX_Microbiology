@@ -5,7 +5,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+BACKEND_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = BACKEND_ROOT.parent
 CSV_FILES = ("patients", "cultures", "isolates", "susceptibility")
 
 
@@ -13,12 +14,12 @@ def data_dir() -> Path:
     """Where the synthetic LIS export CSVs live.
 
     AMR_DATA_DIR wins; otherwise data/raw/ (git-ignored, the plan's location); otherwise the
-    TYKS_data/ folder already committed to this repo.
+    data/tyks/ folder already committed to this repo (paths relative to the repository root).
     """
     env = os.environ.get("AMR_DATA_DIR")
     if env:
         return Path(env)
-    for candidate in (REPO_ROOT / "data" / "raw", REPO_ROOT / "TYKS_data"):
+    for candidate in (REPO_ROOT / "data" / "raw", REPO_ROOT / "data" / "tyks"):
         if (candidate / "cultures.csv").exists():
             return candidate
     raise FileNotFoundError(
