@@ -4,12 +4,13 @@ import { toast } from "sonner";
 import { DataGate, Field, PageHeader, Panel } from "@/components/amr/shell";
 import { SimpleSelect } from "@/components/amr/selects";
 import { Switch } from "@/components/ui/switch";
-import { commonAntibiotics, applicableResult } from "@/lib/amr/applicability";
+import { commonAntibiotics } from "@/lib/amr/applicability";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MARKERS, ORGANISMS, WARDS, weekStart } from "@/lib/amr/reference";
-import { abxResult, addAlert, maxWeek, useAmr, type IsolateRecord } from "@/lib/amr/store";
-import { runScan, singleZones, type Cluster, type ScanModel } from "@/lib/amr/satscan";
+import { addAlert, maxWeek, useAmr } from "@/lib/amr/store";
+import { type Cluster, type ScanModel } from "@/lib/amr/satscan";
+import { clusterScan } from "@/lib/amr/surveillance";
 
 export const Route = createFileRoute("/detection")({
   head: () => ({
@@ -53,26 +54,11 @@ function Detection() {
   const run = () => {
     setRunning(true);
     setTimeout(() => {
-      const T = Number(study);
-      const start = last - T + 1;
-      const locations: string[] = WARDS.map((w) => w.code);
-      const zones = singleZones(locations.length);
-      const marker = MARKERS.find((m) => m.key === activeCase);
-      const code = activeCase.startsWith("abx:") ? activeCase.slice(4) : null;
-      const isCase = (r: IsolateRecord) => (marker ? (r.flags & marker.bit) > 0 : code ? abxResult(r, code) === "R" : true);
-      const inPop = (r: IsolateRecord) => (code ? applicableResult(r.organism, code, r.specimen, false) && abxResult(r, code) !== "-" : true);
-      const cases = locations.map(() => new Array(T).fill(0));
-      const totals = locations.map(() => new Array(T).fill(0));
-      let nCases = 0;
-      for (const r of records) {
-        if (r.week < start || r.week > last) continue;
-        if (org !== "all" && r.organism !== org) continue;
-        const l = locations.indexOf(r.ward);
-        if (l < 0 || !inPop(r)) continue;
-        totals[l][r.week - start]++;
-        if (isCase(r)) (cases[l][r.week - start]++, nCases++);
-      }
-      const clusters = runScan({ locations, zones, weeks: T, cases, totals, model, maxWindow: Number(maxWin), prospective: mode === "prospective", replications: Number(reps), maxClusters: Number(limit), includeOverlapping: overlapping });
+      // Shared with the assistant (lib/amr/surveillance), so both find the same clusters.
+      const { clusters, cases: nCases, start } = clusterScan(records, {
+        model, organism: org, caseDefinition: activeCase, studyWeeks: Number(study), maxWindow: Number(maxWin),
+        prospective: mode === "prospective", replications: Number(reps), maxClusters: Number(limit), includeOverlapping: overlapping, lastWeek: last,
+      });
       const locLabel = (s: string) => WARDS.find((w) => w.code === s)?.name ?? s;
       setResult({ clusters, cases: nCases, start, locLabel });
       setRunning(false);

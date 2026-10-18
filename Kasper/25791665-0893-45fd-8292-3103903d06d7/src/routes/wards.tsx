@@ -5,11 +5,11 @@ import { DataGate, Field, PageHeader, Panel, heatVar } from "@/components/amr/sh
 import { SimpleSelect } from "@/components/amr/selects";
 import { Button } from "@/components/ui/button";
 import { AntibioticGuidance } from "@/components/amr/antibiotic-guidance";
-import { antibioticApplicability, commonAntibiotics, applicableResult } from "@/lib/amr/applicability";
+import { commonAntibiotics } from "@/lib/amr/applicability";
 import { Switch } from "@/components/ui/switch";
 import { ANTIBIOTICS, ORGANISMS, WARDS, weekStart, weekIndex } from "@/lib/amr/reference";
 import { maxWeek, useAmr } from "@/lib/amr/store";
-import { firstIsolates, MIN_ISOLATES, resistance } from "@/lib/amr/stats";
+import { wardMatrix, wardTrend } from "@/lib/amr/surveillance";
 
 export const Route = createFileRoute("/wards")({
   validateSearch: (search: Record<string, unknown>): { ward?: string | undefined; date?: string | undefined } => ({
@@ -54,37 +54,21 @@ function Wards() {
   const activeAbx = available.some((a) => a.code === abx) ? abx : (available[0]?.code || "");
   const wk = Number(week);
   const W = Number(windowW);
-  const pool = useMemo(() => records.filter((r) => org === "all" || r.organism === org), [records, org]);
+  // Shared with the assistant (lib/amr/surveillance), so both report identical figures.
+  const matrix = useMemo(
+    () => wardMatrix(records, { organism: org, endWeek: wk, windowWeeks: W, uncomplicatedUTI: urinary }),
+    [records, org, wk, W, urinary],
+  );
 
-  const matrix = useMemo(() => {
-    const inWin = pool.filter((r) => r.week <= wk && r.week > wk - W);
-    const set = firstIsolates(inWin);
-    const groups = [...WARDS.map((w) => ({ ward: w as { code: string; name: string; type: string }, rs: set.filter((r) => r.ward === w.code) })), { ward: { code: "TOTAL", name: "Total · all wards", type: "total" }, rs: set }];
-    return groups.map(({ ward: w, rs }) => {
-      return { ward: w, n: rs.length, cells: ANTIBIOTICS.map((a) => {
-        const rules = organisms.map((o) => antibioticApplicability(o, a.code));
-        const valid = available.some((x) => x.code === a.code);
-        const reason = organisms.map((o, i) => `${o}: ${rules[i].reason}`).join("\n");
-        const status = valid ? "applicable" : rules.every((r) => r.status === "expected-resistant") ? "expected-resistant" : rules.every((r) => r.status === "screen") ? "screen" : rules.some((r) => r.status === "urinary") && !urinary ? "urinary" : rules.some((r) => r.status === "review") ? "review" : "unsupported";
-        return { ...resistance(valid ? rs.filter((r) => applicableResult(r.organism, a.code, r.specimen, urinary)) : [], a.code), status, reason };
-      }) };
-    });
-  }, [pool, wk, W, organisms, available, urinary]);
-
-  const trend = useMemo(() => {
-    const rows = [];
-    for (let t = Math.max(W - 1, last - 103); t <= last; t++) {
-      const win = pool.filter((r) => r.week <= t && r.week > t - W);
-      const set = firstIsolates(win);
-      const row: Record<string, number | string | null> = { week: weekStart(t) };
-      for (const w of WARDS) {
-        const res = resistance(set.filter((r) => r.ward === w.code && applicableResult(r.organism, activeAbx, r.specimen, urinary)), activeAbx);
-        row[w.code] = res.n >= MIN_ISOLATES && res.pct != null ? +res.pct.toFixed(1) : null;
-      }
-      rows.push(row);
-    }
-    return rows;
-  }, [pool, W, activeAbx, last, urinary]);
+  const trend = useMemo(
+    () =>
+      wardTrend(records, { organism: org, antibiotic: activeAbx, windowWeeks: W, uncomplicatedUTI: urinary, lastWeek: last }).map((pt) => {
+        const row: Record<string, number | string | null> = { week: pt.week };
+        for (const w of WARDS) row[w.code] = pt.byWard[w.code]?.pct ?? null;
+        return row;
+      }),
+    [records, org, W, activeAbx, last, urinary],
+  );
 
   const weeks = Array.from({ length: last + 1 }, (_, i) => last - i).map((i) => ({ value: String(i), label: `Week of ${weekStart(i)}` }));
 
