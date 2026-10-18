@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ANTIBIOTICS, WARDS, daysBetween, setReference, weekIndex } from "./reference";
+import { MAX_UPLOAD_ROWS } from "./upload";
 
 /** One isolate result, as the laboratory recorded it. */
 export type IsolateRecord = {
@@ -282,47 +283,50 @@ const submissionRow = (r: NewRecord) => ({
   source: "dashboard",
 });
 
-/** Saves isolate records in the database, then shows them in every chart straight away. */
+/**
+ * Saves isolate records in the database, then shows them in every chart straight away. One request for the whole
+ * upload, so it is all-or-nothing: a failure saves nothing and a retry cannot create duplicates.
+ */
 export async function addRecords(inputs: NewRecord[]): Promise<number> {
+  if (!inputs.length) return 0;
+  if (inputs.length > MAX_UPLOAD_ROWS) throw new Error(`Upload at most ${MAX_UPLOAD_ROWS} records at a time.`);
   const saved: IsolateRecord[] = [];
   const newStays: StayRecord[] = [];
-  for (let i = 0; i < inputs.length; i += 500) {
-    const batch = inputs.slice(i, i + 500);
-    const { data, error } = await supabase.from("record_submissions").insert(batch.map(submissionRow)).select("id");
-    if (error) throw new Error(error.message);
-    batch.forEach((input, j) => {
-      const id = data?.[j]?.id ?? crypto.randomUUID();
-      const admission = input.admission ?? "";
-      saved.push({
-        id,
-        patient: input.patient,
-        sex: input.sex,
-        age: input.age,
-        date: input.date,
-        week: weekIndex(input.date),
-        ward: input.ward,
-        specimen: input.specimen,
-        organism: input.organism,
-        flags: input.markers,
-        sus: input.sus,
-        admission,
-        onset: isHospitalOnset({ admission, date: input.date }) ? "hospital" : "community",
-        setting: careSetting(input.ward),
-        institution: institutionOf(input.ward),
-        pending: true,
-      });
-      newStays.push({
-        id,
-        patient: input.patient,
-        ward: input.ward,
-        date: input.date,
-        admission,
-        institution: institutionOf(input.ward),
-        result: "positive",
-        nIsolates: 1,
-      });
+  const { data, error } = await supabase.from("record_submissions").insert(inputs.map(submissionRow)).select("id");
+  if (error) throw new Error(`Nothing was saved: ${error.message}`);
+  if ((data ?? []).length !== inputs.length) throw new Error("The database did not confirm every record; reload the page before trying again.");
+  inputs.forEach((input, j) => {
+    const id = (data![j] as { id: string }).id;
+    const admission = input.admission ?? "";
+    saved.push({
+      id,
+      patient: input.patient,
+      sex: input.sex,
+      age: input.age,
+      date: input.date,
+      week: weekIndex(input.date),
+      ward: input.ward,
+      specimen: input.specimen,
+      organism: input.organism,
+      flags: input.markers,
+      sus: input.sus,
+      admission,
+      onset: isHospitalOnset({ admission, date: input.date }) ? "hospital" : "community",
+      setting: careSetting(input.ward),
+      institution: institutionOf(input.ward),
+      pending: true,
     });
-  }
+    newStays.push({
+      id,
+      patient: input.patient,
+      ward: input.ward,
+      date: input.date,
+      admission,
+      institution: institutionOf(input.ward),
+      result: "positive",
+      nIsolates: 1,
+    });
+  });
   submitted = [...submitted, ...saved];
   stays = [...stays, ...newStays];
   merge();
