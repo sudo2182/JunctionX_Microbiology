@@ -6,7 +6,7 @@ import pytest
 from pipeline.clean import RawBatch, clean_batch
 from pipeline.weeks import week_idx_series
 
-FIXTURES = Path(__file__).resolve().parent.parent / "data" / "fixtures"
+FIXTURES = Path(__file__).resolve().parents[2] / "data" / "fixtures"
 
 
 def read_raw(data_dir: Path) -> RawBatch:

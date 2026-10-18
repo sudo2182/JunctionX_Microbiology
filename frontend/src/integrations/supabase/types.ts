@@ -181,7 +181,7 @@ export type Database = {
       [_ in never]: never
     }
   }
-  // Read-only reference views from supabase/migrations/20261017000005_api_views.sql (repo root).
+  // Read-only reference views from backend/supabase/migrations/20261017000005_api_views.sql.
   api: {
     Tables: {
       [_ in never]: never

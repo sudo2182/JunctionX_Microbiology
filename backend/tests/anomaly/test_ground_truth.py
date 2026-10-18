@@ -1,7 +1,7 @@
 """BUILD_PLAN §7.7: the engine must catch the outbreaks planted in the synthetic dataset.
 
 Needs the synthetic LIS export (cultures.csv, isolates.csv, susceptibility.csv). It looks in
-$AMR_DATA_DIR, then data/raw/, TYKS_data/ and /mnt/user-data/uploads, and skips if none exist.
+$AMR_DATA_DIR, then data/raw/, data/tyks/ and /mnt/user-data/uploads, and skips if none exist.
 Set AMR_SLOW=1 to also replay weeks 56-156 and check the false-alarm burden (~2 minutes).
 """
 
@@ -14,8 +14,8 @@ import pytest
 
 from pipeline.anomaly import Engine, build_episodes, load_csv_dir
 
-ROOT = Path(__file__).resolve().parents[2]
-CANDIDATES = [os.environ.get("AMR_DATA_DIR"), ROOT / "data/raw", ROOT / "TYKS_data", "/mnt/user-data/uploads"]
+ROOT = Path(__file__).resolve().parents[3]  # repository root
+CANDIDATES = [os.environ.get("AMR_DATA_DIR"), ROOT / "data/raw", ROOT / "data/tyks", "/mnt/user-data/uploads"]
 URO_ESBL = range(88, 98)  # 2025-W23..W32: outbreak W23-W29 plus the weeks it should resolve in
 ICU_MRSA = range(127, 131)  # 2026-W10..W13
 
