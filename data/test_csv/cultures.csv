@@ -1,0 +1,41 @@
+culture_id,patient_id,collection_date,specimen_type,ward,culture_status,reporting_week_start,reporting_week_end,synthetic_record
+DEMO-C-001,DEMO-P-001,2026-10-05,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-002,DEMO-P-002,2026-10-06,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-003,DEMO-P-003,2026-10-07,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-004,DEMO-P-004,2026-10-08,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-005,DEMO-P-005,2026-10-09,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-006,DEMO-P-006,2026-10-10,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-007,DEMO-P-007,2026-10-11,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-008,DEMO-P-008,2026-10-05,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-009,DEMO-P-009,2026-10-06,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-010,DEMO-P-010,2026-10-07,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-011,DEMO-P-011,2026-10-08,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-012,DEMO-P-012,2026-10-09,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-013,DEMO-P-013,2026-10-10,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-014,DEMO-P-014,2026-10-11,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-015,DEMO-P-015,2026-10-05,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-016,DEMO-P-016,2026-10-06,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-017,DEMO-P-017,2026-10-07,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-018,DEMO-P-018,2026-10-08,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-019,DEMO-P-019,2026-10-09,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-020,DEMO-P-020,2026-10-10,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-021,DEMO-P-021,2026-10-11,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-022,DEMO-P-022,2026-10-05,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-023,DEMO-P-023,2026-10-06,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-024,DEMO-P-024,2026-10-07,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-025,DEMO-P-025,2026-10-08,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-026,DEMO-P-026,2026-10-09,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-027,DEMO-P-027,2026-10-10,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-028,DEMO-P-028,2026-10-11,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-029,DEMO-P-029,2026-10-05,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-030,DEMO-P-030,2026-10-06,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-031,DEMO-P-031,2026-10-07,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-032,DEMO-P-032,2026-10-08,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-033,DEMO-P-033,2026-10-09,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-034,DEMO-P-034,2026-10-10,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-035,DEMO-P-035,2026-10-11,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-036,DEMO-P-036,2026-10-05,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-037,DEMO-P-037,2026-10-06,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
+DEMO-C-038,DEMO-P-038,2026-10-07,Urine,Surgical Ward B,positive,2026-10-05,2026-10-11,True
+DEMO-C-039,DEMO-P-039,2026-10-08,Urine,Emergency Unit,positive,2026-10-05,2026-10-11,True
+DEMO-C-040,DEMO-P-040,2026-10-09,Urine,Medical Ward A,positive,2026-10-05,2026-10-11,True
