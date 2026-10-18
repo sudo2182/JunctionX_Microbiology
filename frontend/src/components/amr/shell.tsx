@@ -7,6 +7,7 @@ import { useAmr } from "@/lib/amr/store";
 import { AuthGate, signOut, useAuth, useIdleSignOut } from "@/lib/auth";
 import { ROLES } from "@/lib/auth-rules";
 import { Assistant } from "@/components/amr/assistant";
+import { ReportButton, ReportProvider } from "@/components/amr/report";
 
 const NAV = [
   { to: "/", label: "Hospital atlas", icon: Building2 },
@@ -85,7 +86,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         )}
       </header>
       <main className="mx-auto w-full max-w-[1600px] flex-1 p-3 md:px-5 md:py-4">
-        <AuthGate>{children}</AuthGate>
+        <ReportProvider>
+          <AuthGate>{children}</AuthGate>
+        </ReportProvider>
       </main>
       {signedIn && <Assistant />}
     </div>
@@ -100,7 +103,7 @@ export function PageHeader({ eyebrow, title, children }: { eyebrow: string; titl
         <div className="eyebrow">{eyebrow}</div>
         <h1 className="text-xl font-semibold">{title}</h1>
       </div>
-      <div className="flex flex-wrap items-end gap-3">{children}</div>
+      <div className="flex flex-wrap items-end gap-3">{children}<ReportButton /></div>
     </div>
   );
 }

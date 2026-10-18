@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { wardOverview } from "@/lib/amr/occupancy";
 import type { IsolateRecord, StayRecord } from "@/lib/amr/store";
 import { ExternalPanel } from "./external-panel";
+import { ReportButton } from "./report";
 import { heatVar } from "./shell";
 
 type Ward = ReturnType<typeof wardOverview>[number];
@@ -31,7 +32,7 @@ export function WardAtlas({ stays, records, asOf, onDateChange, side }: { stays:
   return <div className="space-y-3">
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div><h1 className="text-xl font-semibold">Hospital ward atlas</h1></div>
-      <div className="flex items-center gap-3"><Badge variant="outline">Synthetic dataset</Badge><label className="text-xs text-muted-foreground">Estimate date<Input className="mt-1 w-40 bg-card" aria-label="Occupancy estimate date" type="date" value={asOf} onChange={(e) => e.target.value && onDateChange(e.target.value)} /></label></div>
+      <div className="flex flex-wrap items-end gap-3"><Badge variant="outline">Synthetic dataset</Badge><label className="text-xs text-muted-foreground">Estimate date<Input className="mt-1 w-40 bg-card" aria-label="Occupancy estimate date" type="date" value={asOf} onChange={(e) => e.target.value && onDateChange(e.target.value)} /></label><ReportButton /></div>
     </div>
     <div className="grid items-start gap-3 md:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[320px_minmax(0,1fr)_320px]">
       <ExternalPanel />

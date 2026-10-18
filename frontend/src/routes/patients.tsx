@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useReport } from "@/components/amr/report";
+import { buildPatientsReport } from "@/lib/report/builders";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DataGate, Field, PageHeader, Panel } from "@/components/amr/shell";
 import { SimpleSelect } from "@/components/amr/selects";
@@ -36,8 +38,9 @@ export const Route = createFileRoute("/patients")({
 });
 
 function Patients() {
-  const { userId } = useAuth();
+  const { userId, email } = useAuth();
   const [requests, setRequests] = useState<CultureRequest[]>([]);
+  useReport(() => buildPatientsReport({ requests, email }));
 
   const refresh = useCallback(() => {
     if (userId) myCultureRequests(userId).then(setRequests).catch(() => {});

@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useReport } from "@/components/amr/report";
+import { buildDetectionReport } from "@/lib/report/builders";
 import { useState } from "react";
 import { toast } from "sonner";
 import { DataGate, Field, PageHeader, Panel } from "@/components/amr/shell";
@@ -66,6 +68,12 @@ function Detection() {
   };
 
   const caseLabel = MARKERS.find((m) => m.key === activeCase)?.label ?? (activeCase === "all" ? "all isolates" : `${activeCase.slice(4)}-resistant`);
+  useReport(records.length ? () => buildDetectionReport({
+    records,
+    settings: { model, organism: org, caseDefinition: activeCase, studyWeeks: Number(study), maxWindow: Number(maxWin), prospective: mode === "prospective", replications: Number(reps), maxClusters: Number(limit), includeOverlapping: overlapping, lastWeek: last },
+    caseLabel,
+    pLimit: Number(pLimit),
+  }) : null);
   const pushAlert = (c: Cluster) => {
     if (!result) return;
     addAlert({

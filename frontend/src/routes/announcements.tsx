@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useReport } from "@/components/amr/report";
+import { buildAnnouncementsReport } from "@/lib/report/builders";
 import { useMemo, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { Activity } from "lucide-react";
@@ -43,6 +45,8 @@ function Announcements() {
     () => items.filter((a) => (filter === "all" ? true : filter === "amr" ? a.category !== "unrelated" : a.category === filter)),
     [items, filter],
   );
+  const filterLabels: Record<string, string> = { amr: "AMR relevant + needs review", relevant: "AMR relevant only", review: "Needs review only", unrelated: "Unrelated", all: "Everything" };
+  useReport(status === "ready" ? () => buildAnnouncementsReport({ items: shown, filterLabel: filterLabels[filter] ?? filter, lastCheck, attribution }) : null);
   const age = hoursSince(lastCheck);
   const stale = age === null || age > STALE_AFTER_HOURS;
 

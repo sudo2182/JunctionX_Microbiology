@@ -383,8 +383,22 @@ export function useAmr(): State {
   );
 }
 
+/**
+ * The surveillance "now": the latest week of replayed (ingested) data. Records added from the dashboard and still
+ * pending ingest do not move it, so one record entered with a later date cannot push every page onto an empty week.
+ * Falls back to all records when nothing has been ingested yet.
+ */
 export function maxWeek(records: IsolateRecord[]) {
-  let m = 0;
-  for (const r of records) if (r.week > m) m = r.week;
-  return m;
+  let m = -1;
+  for (const r of records) if (!r.pending && r.week > m) m = r.week;
+  if (m < 0) for (const r of records) if (r.week > m) m = r.week;
+  return Math.max(0, m);
+}
+
+/** Latest sample date of the replayed data (same rule as maxWeek). */
+export function latestSampleDate(records: IsolateRecord[]): string {
+  let d = "";
+  for (const r of records) if (!r.pending && r.date > d) d = r.date;
+  if (!d) for (const r of records) if (r.date > d) d = r.date;
+  return d;
 }

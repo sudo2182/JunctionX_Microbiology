@@ -4,7 +4,7 @@ import { firstIsolates, MIN_ISOLATES } from "@/lib/amr/stats";
 import { markerRates, wardOverview } from "@/lib/amr/occupancy";
 import { clusterScan, wardMatrix, wardTrend, wilson } from "@/lib/amr/surveillance";
 import { feedEntries, sourceInfo } from "@/lib/amr/alert-sources";
-import { maxWeek, type Alert, type IsolateRecord, type StayRecord } from "@/lib/amr/store";
+import { latestSampleDate, maxWeek, type Alert, type IsolateRecord, type StayRecord } from "@/lib/amr/store";
 import type { Announcement } from "@/lib/amr/announcements";
 import { searchKnowledge } from "./knowledge";
 
@@ -84,7 +84,7 @@ function date(a: Args, k: string): string | undefined {
   return v;
 }
 
-const latestDate = (records: IsolateRecord[]) => records.reduce((d, r) => (r.date > d ? r.date : d), "");
+const latestDate = latestSampleDate;
 const wardName = (code: string) => (code === "all" ? "All locations" : WARDS.find((w) => w.code === code)?.name ?? code);
 const abxName = (code: string) => ANTIBIOTICS.find((a) => a.code === code)?.name ?? code;
 

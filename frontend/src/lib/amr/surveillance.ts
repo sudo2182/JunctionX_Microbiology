@@ -127,3 +127,56 @@ export function wilson(r: number, n: number, z = 1.96): { low: number; high: num
   const half = (z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))) / denom;
   return { low: Math.max(0, centre - half) * 100, high: Math.min(1, centre + half) * 100 };
 }
+
+export type SpatialOptions = { organisms: string[]; antibiotic: string | null; fromWeek: number; toWeek: number; uncomplicatedUTI: boolean };
+export type SpatialCell = { n: number; tested: number; pos: number };
+
+const spatialTest = (code: string | null, uti: boolean) =>
+  code
+    ? { applies: (r: IsolateRecord) => applicableResult(r.organism, code, r.specimen, uti) && abxResult(r, code) !== "-", resistant: (r: IsolateRecord) => abxResult(r, code) === "R" }
+    : null;
+
+/**
+ * The Spatial & trends map: per ward, isolate count (all isolates) or, for an antibiotic, first isolates tested and
+ * resistant within the period. Shared by the page and its report.
+ */
+export function spatialByWard(records: IsolateRecord[], o: SpatialOptions): Record<string, SpatialCell> {
+  const m = spatialTest(o.antibiotic, o.uncomplicatedUTI);
+  const pool = records.filter((r) => o.organisms.includes(r.organism));
+  const out: Record<string, SpatialCell> = {};
+  WARDS.forEach((w) => (out[w.code] = { n: 0, tested: 0, pos: 0 }));
+  for (const r of m ? firstIsolates(pool.filter((r) => r.week >= o.fromWeek && r.week <= o.toWeek)) : pool) {
+    if (r.week < o.fromWeek || r.week > o.toWeek || !out[r.ward]) continue;
+    const c = out[r.ward];
+    c.n++;
+    if (m && m.applies(r)) {
+      c.tested++;
+      if (m.resistant(r)) c.pos++;
+    }
+  }
+  return out;
+}
+
+/** The map page's 4-week series over the whole period: isolate counts, or % resistant (null below 30 tested). */
+export function spatialSeries(records: IsolateRecord[], o: Omit<SpatialOptions, "fromWeek" | "toWeek"> & { lastWeek: number }): { period: string; byWard: Record<string, number | null> }[] {
+  const m = spatialTest(o.antibiotic, o.uncomplicatedUTI);
+  const pool = records.filter((r) => o.organisms.includes(r.organism));
+  const bins = Math.ceil((o.lastWeek + 1) / 4);
+  const cnt = Array.from({ length: bins }, () => WARDS.map(() => [0, 0]));
+  const grouped = Array.from({ length: bins }, (_, i) => pool.filter((r) => Math.floor(r.week / 4) === i));
+  for (const r of m ? grouped.flatMap(firstIsolates) : pool) {
+    const bin = cnt[Math.floor(r.week / 4)];
+    const wi = WARDS.findIndex((w) => w.code === r.ward);
+    if (!bin || wi < 0) continue;
+    if (!m) bin[wi][0]++;
+    else if (m.applies(r)) {
+      bin[wi][1]++;
+      if (m.resistant(r)) bin[wi][0]++;
+    }
+  }
+  return cnt.map((bin, i) => {
+    const byWard: Record<string, number | null> = {};
+    WARDS.forEach((w, wi) => (byWard[w.code] = m ? (bin[wi][1] >= MIN_ISOLATES ? +((100 * bin[wi][0]) / bin[wi][1]).toFixed(1) : null) : bin[wi][0]));
+    return { period: weekStart(i * 4), byWard };
+  });
+}

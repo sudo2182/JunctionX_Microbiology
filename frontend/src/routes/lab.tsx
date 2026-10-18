@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useReport } from "@/components/amr/report";
+import { buildLabReport } from "@/lib/report/builders";
 import { useState } from "react";
 import { Field, PageHeader, Panel } from "@/components/amr/shell";
 import { SimpleSelect } from "@/components/amr/selects";
@@ -33,6 +35,7 @@ export const Route = createFileRoute("/lab")({
 function Lab() {
   // Kept current from Supabase in real time: requests sent by doctors appear without reloading.
   const { waiting, loading, error, connection, refresh } = useLabWorklist();
+  useReport(loading ? null : () => buildLabReport({ waiting }));
   const [open, setOpen] = useState<CultureRequest | null>(null);
   const openStillWaiting = !open || waiting.some((r) => r.id === open.id);
 
