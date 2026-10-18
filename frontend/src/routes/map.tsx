@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useReport } from "@/components/amr/report";
+import { buildSpatialReport } from "@/lib/report/builders";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { DataGate, Field, PageHeader, Panel, heatVar } from "@/components/amr/shell";
@@ -8,7 +10,8 @@ import { MarkerCharts } from "@/components/amr/marker-charts";
 import { AntibioticGuidance } from "@/components/amr/antibiotic-guidance";
 import { Switch } from "@/components/ui/switch";
 import { commonAntibiotics, applicableResult } from "@/lib/amr/applicability";
-import { firstIsolates, MIN_ISOLATES } from "@/lib/amr/stats";
+import { MIN_ISOLATES } from "@/lib/amr/stats";
+import { spatialByWard, spatialSeries } from "@/lib/amr/surveillance";
 import { Slider } from "@/components/ui/slider";
 import { WARDS, weekStart } from "@/lib/amr/reference";
 import { abxResult, maxWeek, useAmr, type IsolateRecord } from "@/lib/amr/store";
@@ -70,46 +73,20 @@ function MapView() {
   const available = commonAntibiotics(orgs, urinary);
   const activeMetric = metric === "count" || available.some((a) => metric === `abx:${a.code}`) ? metric : "count";
   const m = matcher(activeMetric, urinary);
-  const pool = useMemo(() => records.filter((r) => orgs.includes(r.organism)), [records, orgs]);
 
-  const byWard = useMemo(() => {
-    const out: Record<string, { n: number; pos: number; tested: number }> = {};
-    WARDS.forEach((w) => (out[w.code] = { n: 0, pos: 0, tested: 0 }));
-    for (const r of (m ? firstIsolates(pool.filter((r) => r.week >= range[0] && r.week <= range[1])) : pool)) {
-      if (r.week < range[0] || r.week > range[1] || !out[r.ward]) continue;
-      const o = out[r.ward];
-      o.n++;
-      if (m && m.applies(r)) {
-        o.tested++;
-        if (m.test(r)) o.pos++;
-      }
-    }
-    return out;
-  }, [pool, range, m]);
+  // Shared with the report (lib/amr/surveillance), so both show identical numbers.
+  const abxCode = activeMetric.startsWith("abx:") ? activeMetric.slice(4) : null;
+  const byWard = useMemo(
+    () => spatialByWard(records, { organisms: orgs, antibiotic: abxCode, fromWeek: range[0], toWeek: range[1], uncomplicatedUTI: urinary }),
+    [records, orgs, abxCode, range, urinary],
+  );
 
-  const series = useMemo(() => {
-    // 4-week bins over the full period
-    const bins = Math.ceil((last + 1) / 4);
-    const cnt = Array.from({ length: bins }, () => WARDS.map(() => [0, 0]));
-    const grouped = Array.from({ length: bins }, (_, i) => pool.filter((r) => Math.floor(r.week / 4) === i));
-    for (const r of (m ? grouped.flatMap(firstIsolates) : pool)) {
-      const bin = cnt[Math.floor(r.week / 4)];
-      const wi = WARDS.findIndex((w) => w.code === r.ward);
-      if (!bin || wi < 0) continue;
-      if (!m) bin[wi][0]++;
-      else if (m.applies(r)) {
-        bin[wi][1]++;
-        if (m.test(r)) bin[wi][0]++;
-      }
-    }
-    const pct = activeMetric.startsWith("abx:");
-    const rows = cnt.map((bin, i) => {
-      const row: Record<string, number | string | null> = { period: weekStart(i * 4) };
-      WARDS.forEach((w, wi) => (row[w.code] = pct ? (bin[wi][1] >= MIN_ISOLATES ? +((100 * bin[wi][0]) / bin[wi][1]).toFixed(1) : null) : bin[wi][0]));
-      return row;
-    });
-    return rows;
-  }, [pool, m, activeMetric, last]);
+  const series = useMemo(
+    () => spatialSeries(records, { organisms: orgs, antibiotic: abxCode, uncomplicatedUTI: urinary, lastWeek: last }).map((b) => ({ period: b.period, ...b.byWard })),
+    [records, orgs, abxCode, urinary, last],
+  );
+
+  useReport(records.length ? () => buildSpatialReport({ records, organisms: orgs, antibiotic: abxCode, fromWeek: range[0], toWeek: range[1], uncomplicatedUTI: urinary, lastWeek: last }) : null);
 
   const value = (code: string) => {
     const o = byWard[code];

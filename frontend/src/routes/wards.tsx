@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useReport } from "@/components/amr/report";
+import { buildWardsReport } from "@/lib/report/builders";
 import { useMemo, useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { DataGate, Field, PageHeader, Panel, heatVar } from "@/components/amr/shell";
@@ -69,6 +71,8 @@ function Wards() {
       }),
     [records, org, W, activeAbx, last, urinary],
   );
+
+  useReport(records.length && activeAbx ? () => buildWardsReport({ records, organism: org, endWeek: wk, windowWeeks: W, uncomplicatedUTI: urinary, antibiotic: activeAbx, lastWeek: last }) : null);
 
   const weeks = Array.from({ length: last + 1 }, (_, i) => last - i).map((i) => ({ value: String(i), label: `Week of ${weekStart(i)}` }));
 

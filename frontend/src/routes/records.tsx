@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useReport } from "@/components/amr/report";
+import { buildRecordsReport } from "@/lib/report/builders";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Plus, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -10,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ANTIBIOTICS, MARKERS, ORGANISMS, SPECIMENS, WARDS, shortOrg } from "@/lib/amr/reference";
-import { addRecords, deleteRecord, useAmr, type NewRecord } from "@/lib/amr/store";
+import { addRecords, deleteRecord, latestSampleDate, useAmr, type NewRecord } from "@/lib/amr/store";
 import { parseUpload, recordKey, templateExample, templateHead } from "@/lib/amr/upload";
 import { useAuth } from "@/lib/auth";
 
@@ -71,6 +73,9 @@ function Records() {
       .filter((r) => (org === "all" || r.organism === org) && (ward === "all" || r.ward === ward) && (marker === "all" || (marker === "user" ? r.pending : m && r.flags & m.bit)) && (!s || r.id.toLowerCase().includes(s) || r.patient.toLowerCase().includes(s)))
       .sort((a, b) => b.date.localeCompare(a.date));
   }, [records, q, org, ward, marker]);
+
+  const filterLabel = [org === "all" ? "all organisms" : org, ward === "all" ? "all locations" : ward, marker === "all" ? "any marker" : marker === "user" ? "added from dashboard" : marker.toUpperCase(), q.trim() ? `ID contains "${q.trim()}"` : ""].filter(Boolean).join(" · ");
+  useReport(records.length ? () => buildRecordsReport({ records: filtered, filterLabel }) : null);
 
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE));
   const rows = filtered.slice(page * PAGE, page * PAGE + PAGE);
@@ -202,7 +207,7 @@ function BulkUploadDialog() {
 function AddRecordDialog() {
   const { records } = useAmr();
   // Default to the latest sample already in the database so a new entry lands in the current reporting period.
-  const latestDate = useMemo(() => records.reduce((d, r) => (d === "" || r.date > d ? r.date : d), ""), [records]);
+  const latestDate = useMemo(() => latestSampleDate(records), [records]);
   const init = { patient: "", sex: "F", age: "", date: latestDate, admission: "", ward: "MED-A", specimen: "urine", organism: "Escherichia coli" };
   const [open, setOpen] = useState(false);
   const [f, setF] = useState(init);

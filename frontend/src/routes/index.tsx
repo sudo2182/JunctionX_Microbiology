@@ -1,4 +1,8 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { useReport } from "@/components/amr/report";
+import { buildAtlasReport } from "@/lib/report/builders";
+import { wardOverview } from "@/lib/amr/occupancy";
+import { useExternal } from "@/lib/amr/external";
 import { useMemo, useState } from "react";
 import { ArrowUpRight, ExternalLink, Rss, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { addAlert, deleteAlert, useAmr, type Alert } from "@/lib/amr/store";
+import { addAlert, deleteAlert, latestSampleDate, useAmr, type Alert } from "@/lib/amr/store";
 import { WardAtlas } from "@/components/amr/ward-atlas";
 import { useAnnouncements, type Announcement } from "@/lib/amr/announcements";
 import { SOURCES, feedEntries, lastUpdated, sourceInfo, type FeedEntry, type Trace } from "@/lib/amr/alert-sources";
@@ -36,9 +40,19 @@ export const Route = createFileRoute("/")({
 
 function Overview() {
   const { records, stays } = useAmr();
-  const latest = useMemo(() => records.reduce((date, r) => r.date > date ? r.date : date, ""), [records]);
+  const latest = useMemo(() => latestSampleDate(records), [records]);
   const [selectedDate, setSelectedDate] = useState("");
   const asOf = selectedDate || latest;
+  const { alerts } = useAmr();
+  const ecdcForReport = useAnnouncements();
+  const external = useExternal();
+  useReport(records.length ? () => buildAtlasReport({
+    wards: wardOverview(stays, records, asOf),
+    asOf,
+    latestSample: latest,
+    feed: feedEntries(alerts, ecdcForReport.items, new Set(records.map((r) => r.id))),
+    external: external.data,
+  }) : null);
 
   return (
     <div className="space-y-3">

@@ -41,9 +41,9 @@ export const recordKey = (r: { patient: string; date: string; ward: string; spec
 
 export type ParseOptions = {
   /** recordKey() of records already in the database, so re-uploading a file does not create duplicates. */
-  existing?: ReadonlySet<string>;
+  existing?: ReadonlySet<string> | undefined;
   /** "Today" as YYYY-MM-DD (sample dates may not be later). Defaults to the current UTC date. */
-  today?: string;
+  today?: string | undefined;
 };
 
 export type ParseResult = { rows: NewRecord[]; problems: string[]; duplicates: number };
