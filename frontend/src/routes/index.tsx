@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowUpRight, ExternalLink, Trash2 } from "lucide-react";
+import { ArrowUpRight, ExternalLink, Rss, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { DataGate, Field, Panel } from "@/components/amr/shell";
 import { SimpleSelect } from "@/components/amr/selects";
@@ -12,6 +12,7 @@ import { addAlert, deleteAlert, useAmr, type Alert } from "@/lib/amr/store";
 import { WardAtlas } from "@/components/amr/ward-atlas";
 import { useAnnouncements, type Announcement } from "@/lib/amr/announcements";
 import { SOURCES, feedEntries, lastUpdated, sourceInfo, type FeedEntry, type Trace } from "@/lib/amr/alert-sources";
+import { FEED_PATH } from "@/lib/amr/alert-rss";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -105,7 +106,7 @@ function AlertFeed() {
   return (
     <Panel
       title="Alerts & news"
-      right={<div className="flex items-center gap-2"><Button size="sm" variant={posting ? "secondary" : "outline"} onClick={() => setPosting(!posting)}>{posting ? "Close" : "Post alert"}</Button>{
+      right={<div className="flex items-center gap-2"><Button asChild size="sm" variant="ghost" title="Public RSS feed of the alerts posted here (ECDC news not included)"><a href={FEED_PATH} target="_blank" rel="noopener noreferrer"><Rss className="h-4 w-4" />RSS</a></Button><Button size="sm" variant={posting ? "secondary" : "outline"} onClick={() => setPosting(!posting)}>{posting ? "Close" : "Post alert"}</Button>{
         <SimpleSelect
           className="h-8 w-44"
           value={filter}
@@ -190,7 +191,8 @@ function PostAlert({ onDone }: { onDone: () => void }) {
   };
   return (
     <div>
-      <h3 className="mb-3 text-sm font-semibold">Post a news article / outbreak alert</h3>
+      <h3 className="mb-1 text-sm font-semibold">Post a news article / outbreak alert</h3>
+      <p className="mb-3 text-xs text-muted-foreground">Posted alerts appear in this feed and in the public <a href={FEED_PATH} target="_blank" rel="noopener noreferrer" className="underline">RSS feed</a> that anyone can read. Never include patient names or identifiers.</p>
       <form onSubmit={submit} className="grid gap-2 md:grid-cols-2 xl:grid-cols-1">
         <Field label="Headline"><Input value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="e.g. NDM-producing E. coli outbreak in…" /></Field>
         <Field label="Article URL"><Input value={f.url} onChange={(e) => setF({ ...f, url: e.target.value })} placeholder="https://…" /></Field>
