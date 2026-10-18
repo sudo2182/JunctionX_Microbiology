@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ANTIBIOTICS, MARKERS, ORGANISMS, SPECIMENS, WARDS, shortOrg } from "@/lib/amr/reference";
 import { addRecords, deleteRecord, useAmr, type NewRecord } from "@/lib/amr/store";
-import { parseUpload, templateExample, templateHead } from "@/lib/amr/upload";
+import { parseUpload, recordKey, templateExample, templateHead } from "@/lib/amr/upload";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/records")({
@@ -135,13 +135,17 @@ function BulkUploadDialog() {
   const [open, setOpen] = useState(false);
   const [ready, setReady] = useState<NewRecord[]>([]);
   const [problems, setProblems] = useState<string[]>([]);
+  const [duplicates, setDuplicates] = useState(0);
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { records } = useAmr();
 
   const take = async (file: File) => {
-    const parsed = parseUpload(await file.text());
+    // Records already in the database (pipeline + earlier uploads) are skipped, so re-uploading a file is safe.
+    const parsed = parseUpload(await file.text(), { existing: new Set(records.map(recordKey)) });
     setReady(parsed.rows);
     setProblems(parsed.problems);
+    setDuplicates(parsed.duplicates);
   };
 
   const save = () => {
@@ -153,6 +157,7 @@ function BulkUploadDialog() {
         setOpen(false);
         setReady([]);
         setProblems([]);
+        setDuplicates(0);
         if (fileRef.current) fileRef.current.value = "";
       })
       .catch((e: unknown) => toast.error(e instanceof Error ? e.message : "Could not save the records"))
@@ -180,10 +185,10 @@ function BulkUploadDialog() {
             <Input ref={fileRef} type="file" accept=".csv,text/csv" className="file:mr-3 file:rounded file:border-0 file:bg-secondary file:px-3 file:py-1 file:text-xs" onChange={(e) => { const f = e.target.files?.[0]; if (f) void take(f); }} />
             <Button variant="ghost" size="sm" onClick={template}><Download className="mr-1 h-3.5 w-3.5" />Template</Button>
           </div>
-          {ready.length > 0 && (
+          {(ready.length > 0 || problems.length > 0) && (
             <div className="rounded border bg-secondary/40 p-3 text-sm">
               <span className="num font-semibold">{ready.length}</span> records ready
-              {problems.length > 0 && <span className="text-muted-foreground"> · {problems.length} row(s) skipped</span>}
+              {problems.length > 0 && <span className="text-muted-foreground"> · {problems.length} row(s) skipped{duplicates > 0 ? ` (${duplicates} duplicate${duplicates === 1 ? "" : "s"})` : ""}</span>}
               {problems.length > 0 && <ul className="mt-2 max-h-28 overflow-y-auto text-xs text-muted-foreground">{problems.map((p, i) => <li key={i}>{p}</li>)}</ul>}
             </div>
           )}
