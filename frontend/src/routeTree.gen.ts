@@ -19,6 +19,7 @@ import { Route as PatientsRouteImport } from './routes/patients'
 import { Route as RecordsRouteImport } from './routes/records'
 import { Route as WardsRouteImport } from './routes/wards'
 import { Route as ApiAssistantRouteImport } from './routes/api/assistant'
+import { Route as RssAlertsDotxmlRouteImport } from './routes/rss/alerts[.]xml'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +71,11 @@ const ApiAssistantRoute = ApiAssistantRouteImport.update({
   path: '/api/assistant',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RssAlertsDotxmlRoute = RssAlertsDotxmlRouteImport.update({
+  id: '/rss/alerts.xml',
+  path: '/rss/alerts.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/records': typeof RecordsRoute
   '/wards': typeof WardsRoute
   '/api/assistant': typeof ApiAssistantRoute
+  '/rss/alerts.xml': typeof RssAlertsDotxmlRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/records': typeof RecordsRoute
   '/wards': typeof WardsRoute
   '/api/assistant': typeof ApiAssistantRoute
+  '/rss/alerts.xml': typeof RssAlertsDotxmlRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/records': typeof RecordsRoute
   '/wards': typeof WardsRoute
   '/api/assistant': typeof ApiAssistantRoute
+  '/rss/alerts.xml': typeof RssAlertsDotxmlRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/records'
     | '/wards'
     | '/api/assistant'
+    | '/rss/alerts.xml'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/records'
     | '/wards'
     | '/api/assistant'
+    | '/rss/alerts.xml'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/records'
     | '/wards'
     | '/api/assistant'
+    | '/rss/alerts.xml'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +170,7 @@ export interface RootRouteChildren {
   RecordsRoute: typeof RecordsRoute
   WardsRoute: typeof WardsRoute
   ApiAssistantRoute: typeof ApiAssistantRoute
+  RssAlertsDotxmlRoute: typeof RssAlertsDotxmlRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAssistantRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rss/alerts.xml': {
+      id: '/rss/alerts.xml'
+      path: '/rss/alerts.xml'
+      fullPath: '/rss/alerts.xml'
+      preLoaderRoute: typeof RssAlertsDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -246,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecordsRoute: RecordsRoute,
   WardsRoute: WardsRoute,
   ApiAssistantRoute: ApiAssistantRoute,
+  RssAlertsDotxmlRoute: RssAlertsDotxmlRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
