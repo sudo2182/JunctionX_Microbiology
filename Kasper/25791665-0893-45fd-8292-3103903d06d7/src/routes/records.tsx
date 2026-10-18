@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { ANTIBIOTICS, MARKERS, ORGANISMS, SPECIMENS, WARDS, shortOrg } from "@/lib/amr/reference";
 import { addRecords, deleteRecord, useAmr, type NewRecord } from "@/lib/amr/store";
 import { parseUpload, templateExample, templateHead } from "@/lib/amr/upload";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/records")({
   // ?q= pre-fills the ID search, so alerts can link to the exact record they came from.
@@ -31,8 +32,7 @@ export const Route = createFileRoute("/records")({
   component: () => (
     <>
       <PageHeader eyebrow="Database" title="Isolate records">
-        <BulkUploadDialog />
-        <AddRecordDialog />
+        <LabWriteControls />
       </PageHeader>
       <DataGate>
         <Records />
@@ -43,8 +43,20 @@ export const Route = createFileRoute("/records")({
 
 const PAGE = 50;
 
+/** Adding isolate records is a laboratory task; doctors can browse and export. */
+function LabWriteControls() {
+  if (useAuth().activeRole !== "lab") return null;
+  return (
+    <>
+      <BulkUploadDialog />
+      <AddRecordDialog />
+    </>
+  );
+}
+
 function Records() {
   const { records } = useAmr();
+  const canDelete = useAuth().activeRole === "lab";
   const search = Route.useSearch();
   const [q, setQ] = useState(search.q ?? "");
   const [org, setOrg] = useState("all");
@@ -101,7 +113,7 @@ function Records() {
                 <td className="p-2 italic">{shortOrg(r.organism)}</td>
                 <td className="p-2">{MARKERS.filter((m) => r.flags & m.bit).map((m) => <Badge key={m.key} className="mr-1 bg-destructive text-destructive-foreground">{m.label}</Badge>)}</td>
                 <td className="num p-2 text-xs text-muted-foreground">{ANTIBIOTICS.filter((_, i) => r.sus[i] === "R").map((a) => a.code).join(" ")}</td>
-                <td className="p-2">{r.pending && <button aria-label="Delete record" onClick={() => deleteRecord(r.id).catch((e: unknown) => toast.error(e instanceof Error ? e.message : "Could not delete the record"))}><Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" /></button>}</td>
+                <td className="p-2">{r.pending && canDelete && <button aria-label="Delete record" onClick={() => deleteRecord(r.id).catch((e: unknown) => toast.error(e instanceof Error ? e.message : "Could not delete the record"))}><Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" /></button>}</td>
               </tr>
             ))}
           </tbody>

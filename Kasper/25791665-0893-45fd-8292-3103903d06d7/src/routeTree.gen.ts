@@ -11,11 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnnouncementsRouteImport } from './routes/announcements'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DetectionRouteImport } from './routes/detection'
+import { Route as LabRouteImport } from './routes/lab'
 import { Route as MapRouteImport } from './routes/map'
+import { Route as PatientsRouteImport } from './routes/patients'
 import { Route as RecordsRouteImport } from './routes/records'
-import { Route as RiskRouteImport } from './routes/risk'
 import { Route as WardsRouteImport } from './routes/wards'
+import { Route as ApiAssistantRouteImport } from './routes/api/assistant'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -27,9 +30,19 @@ const AnnouncementsRoute = AnnouncementsRouteImport.update({
   path: '/announcements',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DetectionRoute = DetectionRouteImport.update({
   id: '/detection',
   path: '/detection',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LabRoute = LabRouteImport.update({
+  id: '/lab',
+  path: '/lab',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MapRoute = MapRouteImport.update({
@@ -37,14 +50,14 @@ const MapRoute = MapRouteImport.update({
   path: '/map',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PatientsRoute = PatientsRouteImport.update({
+  id: '/patients',
+  path: '/patients',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RecordsRoute = RecordsRouteImport.update({
   id: '/records',
   path: '/records',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RiskRoute = RiskRouteImport.update({
-  id: '/risk',
-  path: '/risk',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WardsRoute = WardsRouteImport.update({
@@ -52,73 +65,99 @@ const WardsRoute = WardsRouteImport.update({
   path: '/wards',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAssistantRoute = ApiAssistantRouteImport.update({
+  id: '/api/assistant',
+  path: '/api/assistant',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/announcements': typeof AnnouncementsRoute
+  '/auth': typeof AuthRoute
   '/detection': typeof DetectionRoute
+  '/lab': typeof LabRoute
   '/map': typeof MapRoute
+  '/patients': typeof PatientsRoute
   '/records': typeof RecordsRoute
-  '/risk': typeof RiskRoute
   '/wards': typeof WardsRoute
+  '/api/assistant': typeof ApiAssistantRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/announcements': typeof AnnouncementsRoute
+  '/auth': typeof AuthRoute
   '/detection': typeof DetectionRoute
+  '/lab': typeof LabRoute
   '/map': typeof MapRoute
+  '/patients': typeof PatientsRoute
   '/records': typeof RecordsRoute
-  '/risk': typeof RiskRoute
   '/wards': typeof WardsRoute
+  '/api/assistant': typeof ApiAssistantRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/announcements': typeof AnnouncementsRoute
+  '/auth': typeof AuthRoute
   '/detection': typeof DetectionRoute
+  '/lab': typeof LabRoute
   '/map': typeof MapRoute
+  '/patients': typeof PatientsRoute
   '/records': typeof RecordsRoute
-  '/risk': typeof RiskRoute
   '/wards': typeof WardsRoute
+  '/api/assistant': typeof ApiAssistantRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/announcements'
+    | '/auth'
     | '/detection'
+    | '/lab'
     | '/map'
+    | '/patients'
     | '/records'
-    | '/risk'
     | '/wards'
+    | '/api/assistant'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/announcements'
+    | '/auth'
     | '/detection'
+    | '/lab'
     | '/map'
+    | '/patients'
     | '/records'
-    | '/risk'
     | '/wards'
+    | '/api/assistant'
   id:
     | '__root__'
     | '/'
     | '/announcements'
+    | '/auth'
     | '/detection'
+    | '/lab'
     | '/map'
+    | '/patients'
     | '/records'
-    | '/risk'
     | '/wards'
+    | '/api/assistant'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnnouncementsRoute: typeof AnnouncementsRoute
+  AuthRoute: typeof AuthRoute
   DetectionRoute: typeof DetectionRoute
+  LabRoute: typeof LabRoute
   MapRoute: typeof MapRoute
+  PatientsRoute: typeof PatientsRoute
   RecordsRoute: typeof RecordsRoute
-  RiskRoute: typeof RiskRoute
   WardsRoute: typeof WardsRoute
+  ApiAssistantRoute: typeof ApiAssistantRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -137,11 +176,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnnouncementsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/detection': {
       id: '/detection'
       path: '/detection'
       fullPath: '/detection'
       preLoaderRoute: typeof DetectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lab': {
+      id: '/lab'
+      path: '/lab'
+      fullPath: '/lab'
+      preLoaderRoute: typeof LabRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/map': {
@@ -151,18 +204,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MapRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/patients': {
+      id: '/patients'
+      path: '/patients'
+      fullPath: '/patients'
+      preLoaderRoute: typeof PatientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/records': {
       id: '/records'
       path: '/records'
       fullPath: '/records'
       preLoaderRoute: typeof RecordsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/risk': {
-      id: '/risk'
-      path: '/risk'
-      fullPath: '/risk'
-      preLoaderRoute: typeof RiskRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/wards': {
@@ -172,17 +225,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WardsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/assistant': {
+      id: '/api/assistant'
+      path: '/api/assistant'
+      fullPath: '/api/assistant'
+      preLoaderRoute: typeof ApiAssistantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnnouncementsRoute: AnnouncementsRoute,
+  AuthRoute: AuthRoute,
   DetectionRoute: DetectionRoute,
+  LabRoute: LabRoute,
   MapRoute: MapRoute,
+  PatientsRoute: PatientsRoute,
   RecordsRoute: RecordsRoute,
-  RiskRoute: RiskRoute,
   WardsRoute: WardsRoute,
+  ApiAssistantRoute: ApiAssistantRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
