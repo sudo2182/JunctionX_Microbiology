@@ -44,30 +44,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b bg-card">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-8 px-4 md:px-7">
-          <Link to="/" className="flex items-center gap-2 py-2 text-primary" aria-label="AMR Watch home">
+        {/* Row 1: brand and account. Row 2: navigation, so every tab stays visible at any width. */}
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-1.5 md:px-7">
+          <Link to="/" className="flex items-center gap-2 text-primary" aria-label="AMR Watch home">
             <Activity className="h-5 w-5" />
-            <span className="text-xl font-semibold">AMR Watch</span>
+            <span className="leading-tight">
+              <span className="block text-xl font-semibold">AMR Watch</span>
+              <span className="block text-[11px] font-normal text-muted-foreground">Synthetic surveillance data</span>
+            </span>
           </Link>
-          {signedIn && (
-            <nav aria-label="Main navigation" className="order-3 flex w-full gap-1 overflow-x-auto lg:order-none lg:w-auto lg:flex-1">
-            {[...roleNav, ...NAV].map((n) => (
-              <Link
-                key={n.to}
-                to={n.to}
-                activeOptions={{ exact: n.to === "/" }}
-                className="flex shrink-0 items-center gap-2 border-b-2 border-transparent px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
-                activeProps={{ className: "border-primary text-primary" }}
-              >
-                <n.icon className="h-4 w-4" />
-                {n.label}
-              </Link>
-            ))}
-            </nav>
-          )}
-          <span className="ml-auto text-xs text-muted-foreground">Synthetic surveillance data</span>
           {signedIn && auth.activeRole && (
-            <div className="flex items-center gap-2 py-2">
+            <div className="flex items-center gap-2">
               <span className="hidden text-right text-xs leading-tight sm:block">
                 <span className="block font-medium">{ROLES[auth.activeRole].label}</span>
                 <span className="block text-muted-foreground">{auth.email}</span>
@@ -79,6 +66,23 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           )}
         </div>
+        {signedIn && (
+          <nav aria-label="Main navigation" className="mx-auto flex max-w-[1600px] gap-1 overflow-x-auto px-2 md:flex-wrap md:overflow-visible md:px-5">
+            {/* The role's own page (Patients or Laboratory) comes last, after the shared surveillance pages. */}
+            {[...NAV, ...roleNav].map((n) => (
+              <Link
+                key={n.to}
+                to={n.to}
+                activeOptions={{ exact: n.to === "/" }}
+                className="flex shrink-0 items-center gap-2 border-b-2 border-transparent px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+                activeProps={{ className: "border-primary text-primary" }}
+              >
+                <n.icon className="h-4 w-4" />
+                {n.label}
+              </Link>
+            ))}
+          </nav>
+        )}
       </header>
       <main className="mx-auto w-full max-w-[1600px] flex-1 p-3 md:px-5 md:py-4">
         <AuthGate>{children}</AuthGate>

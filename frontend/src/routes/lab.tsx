@@ -1,14 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Field, PageHeader, Panel } from "@/components/amr/shell";
 import { SimpleSelect } from "@/components/amr/selects";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ANTIBIOTICS, MARKERS, ORGANISMS, WARDS } from "@/lib/amr/reference";
 import { RequireRole } from "@/lib/auth";
-import { completeCultureRequest, waitingCultures, type CultureRequest } from "@/lib/amr/cultures";
+import { completeCultureRequest, type CultureRequest } from "@/lib/amr/cultures";
+import { useLabWorklist } from "@/lib/amr/use-lab-worklist";
 import { toast } from "sonner";
-import { FlaskConical, Plus, X } from "lucide-react";
+import { FlaskConical, Plus, RefreshCw, X } from "lucide-react";
 
 export const Route = createFileRoute("/lab")({
   head: () => ({
@@ -30,18 +31,29 @@ export const Route = createFileRoute("/lab")({
 });
 
 function Lab() {
-  const [waiting, setWaiting] = useState<CultureRequest[]>([]);
+  // Kept current from Supabase in real time: requests sent by doctors appear without reloading.
+  const { waiting, loading, error, connection, refresh } = useLabWorklist();
   const [open, setOpen] = useState<CultureRequest | null>(null);
-
-  const refresh = useCallback(() => {
-    waitingCultures().then(setWaiting).catch(() => {});
-  }, []);
-  useEffect(refresh, [refresh]);
+  const openStillWaiting = !open || waiting.some((r) => r.id === open.id);
 
   return (
     <div className="grid gap-3 lg:grid-cols-[380px_1fr]">
-      <Panel title={`Waiting list (${waiting.length})`}>
-        {waiting.length === 0 ? (
+      <Panel
+        title={`Waiting list (${waiting.length})`}
+        right={
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5" title="Updates arrive automatically from Supabase">
+              <span className={`h-2 w-2 rounded-full ${connection === "live" ? "bg-success" : connection === "offline" ? "bg-destructive" : "bg-warning"}`} />
+              {connection === "live" ? "Live" : connection === "offline" ? "Offline · refreshing every 30 s" : "Connecting…"}
+            </span>
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => void refresh()} aria-label="Refresh waiting list"><RefreshCw className="h-3.5 w-3.5" /></Button>
+          </div>
+        }
+      >
+        {error && <p role="alert" className="mb-2 text-sm text-destructive">Could not load the waiting list: {error}</p>}
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : waiting.length === 0 ? (
           <p className="text-sm text-muted-foreground">No cultures waiting.</p>
         ) : (
           <ul className="divide-y">
@@ -60,7 +72,9 @@ function Lab() {
           </ul>
         )}
       </Panel>
-      {open ? <ResultForm key={open.id} req={open} onDone={() => { setOpen(null); refresh(); }} /> : (
+      {open && !openStillWaiting ? (
+        <Panel><p className="text-sm text-muted-foreground">Culture {open.culture_id} is no longer waiting: it has already been completed.</p></Panel>
+      ) : open ? <ResultForm key={open.id} req={open} onDone={() => { setOpen(null); void refresh(); }} /> : (
         <Panel><p className="text-sm text-muted-foreground">Select a culture from the waiting list to enter results.</p></Panel>
       )}
     </div>
