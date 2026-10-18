@@ -110,3 +110,20 @@ export async function completeCultureRequest(req: CultureRequest, isolates: Isol
     .eq("id", req.id);
   if (error) throw new Error(error.message);
 }
+
+export type CultureChange =
+  | { eventType: "INSERT" | "UPDATE"; new: Partial<CultureRequest> }
+  | { eventType: "DELETE"; old: Partial<CultureRequest> };
+
+/**
+ * Applies one realtime change to the lab's waiting list: pending requests are added or refreshed, anything
+ * that left "pending" (completed by any lab user) or was deleted is removed. Oldest first, like the query.
+ */
+export function applyWaitingChange(list: CultureRequest[], change: CultureChange): CultureRequest[] {
+  if (change.eventType === "DELETE") return change.old.id ? list.filter((r) => r.id !== change.old.id) : list;
+  const row = change.new as CultureRequest;
+  if (!row.id) return list;
+  const rest = list.filter((r) => r.id !== row.id);
+  if (row.status !== "pending") return rest;
+  return [...rest, row].sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
